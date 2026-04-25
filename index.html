@@ -1,0 +1,2417 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>OK Operasi · Alkes & Obat</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#080c12"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="OK Operasi"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* ═══════════════════════════════════
+   ROOT VARIABLES & RESET
+═══════════════════════════════════ */
+:root{
+  --bg:#080c12; --s1:#0d1420; --s2:#111d2e; --s3:#162236; --s4:#1c2d45; --s5:#243550;
+  --bdr:rgba(59,130,246,.13); --bdr2:rgba(59,130,246,.22); --bdr3:rgba(59,130,246,.35);
+  --blue:#3b82f6; --blue2:#1d4ed8;
+  --acc:#22d3b4; --acc2:#0d9488;
+  --or:#f59e0b;  --or2:#d97706;
+  --grn:#10b981; --grn2:#059669;
+  --red:#ef4444; --red2:#dc2626;
+  --ylw:#fbbf24; --pur:#8b5cf6;
+  --txt:#e2eaf6; --txt2:#8ba4c0; --txt3:#4f6a88; --dim:#4f6a88;
+  --glass:rgba(13,20,32,.75);
+  --acc-glow:rgba(34,211,180,.3); --grn-glow:rgba(16,185,129,.35);
+  --red-glow:rgba(239,68,68,.35); --or-glow:rgba(245,158,11,.3);
+  --F:'Plus Jakarta Sans',sans-serif; --M:'JetBrains Mono',monospace;
+  --r:10px; --rl:14px; --tr:.16s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:var(--F);font-size:14px;min-height:100vh;overflow-x:hidden;overscroll-behavior:none}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--s4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--s5)}
+
+/* ═══ OFFLINE BANNER ═══ */
+.offline-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,var(--red2),var(--red));color:#fff;text-align:center;padding:8px;font-size:12px;font-weight:700;letter-spacing:.5px;animation:slideDown .3s ease}
+.offline-banner.show{display:block}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+
+/* ═══ TOAST ═══ */
+#toastC{position:fixed;bottom:20px;right:20px;z-index:9000;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{background:var(--s2);border:1px solid var(--bdr2);border-left:3px solid var(--acc);color:var(--txt);padding:9px 14px;border-radius:var(--r);font-size:12px;font-weight:600;backdrop-filter:blur(16px);box-shadow:0 8px 32px rgba(0,0,0,.5);animation:tIn .25s ease forwards;pointer-events:auto;max-width:280px}
+.toast.err{border-left-color:var(--red)}.toast.warn{border-left-color:var(--or)}
+@keyframes tIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes tOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(16px)}}
+
+/* ═══ HEADER ═══ */
+.hdr{position:sticky;top:0;z-index:400;background:var(--glass);backdrop-filter:blur(22px);border-bottom:1px solid var(--bdr);padding:0 20px;height:58px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hdr-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--blue),var(--acc));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#080c12;flex-shrink:0;box-shadow:0 0 14px var(--acc-glow)}
+.hdr-info{flex:1;min-width:0}
+.hdr-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-sub{font-size:10px;color:var(--txt3);font-family:var(--M);letter-spacing:.4px}
+.hdr-right{display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.hdr-clock{font-family:var(--M);font-size:12px;font-weight:600;color:var(--acc);background:rgba(34,211,180,.08);border:1px solid rgba(34,211,180,.2);padding:5px 11px;border-radius:7px;white-space:nowrap;letter-spacing:.5px}
+#saveStat{font-family:var(--M);font-size:10px;color:var(--txt3)}
+
+/* ═══ TABS ═══ */
+.tabs-wrap{position:sticky;top:58px;z-index:399;background:var(--s1);border-bottom:1px solid var(--bdr);padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.tabs-wrap::-webkit-scrollbar{display:none}
+.tabs{display:flex;min-width:max-content}
+.tab{padding:11px 16px;border:none;background:transparent;color:var(--txt3);font-family:var(--F);font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:7px;transition:all var(--tr);flex-shrink:0}
+.tab:hover{color:var(--txt);background:rgba(255,255,255,.02)}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc);background:rgba(34,211,180,.04)}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--s4);flex-shrink:0;transition:all .2s}
+.tab.on .tdot{background:var(--acc);box-shadow:0 0 7px var(--acc);animation:blink 1.4s infinite}
+.tab.s-berlangsung .tdot{background:var(--grn);box-shadow:0 0 5px var(--grn);animation:blink 1.5s infinite}
+.tab.s-persiapan .tdot{background:var(--blue);box-shadow:0 0 5px var(--blue)}
+.tab.s-darurat .tdot{background:var(--red);box-shadow:0 0 5px var(--red);animation:blink .8s infinite}
+.tab.s-selesai .tdot{background:var(--grn)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ═══ MAIN ═══ */
+main{position:relative;z-index:1;padding:16px 20px;max-width:1100px;margin:0 auto}
+.panel{display:none}.panel.on{display:block}
+
+/* ═══ STAT CARDS GRID (dashboard) ═══ */
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.sc-card{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);padding:16px 18px;position:relative;overflow:hidden;transition:all var(--tr);cursor:default}
+.sc-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.sc-card.blue::after{background:var(--blue)}.sc-card.grn::after{background:var(--grn)}
+.sc-card.or::after{background:var(--or)}.sc-card.red::after{background:var(--red)}
+.sc-card:hover{border-color:var(--bdr2);transform:translateY(-2px)}
+.sc-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--txt3);margin-bottom:8px}
+.sc-val{font-family:var(--M);font-size:26px;font-weight:700;line-height:1;margin-bottom:3px}
+.sc-card.blue .sc-val{color:var(--blue)}.sc-card.grn .sc-val{color:var(--grn)}
+.sc-card.or .sc-val{color:var(--or)}.sc-card.red .sc-val{color:var(--red)}
+.sc-sub{font-size:11px;color:var(--txt3)}
+
+/* ═══ KAMAR CARD (patient info bar) ═══ */
+.pcard{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);padding:12px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.pc-field{display:flex;flex-direction:column;gap:5px}
+.pc-label{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px}
+.pi{background:var(--s2);border:1.5px solid var(--bdr2);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:14px;padding:7px 11px;outline:none;transition:border-color var(--tr)}
+.pi:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-glow)}
+.pi-n{width:190px}.pi-t{width:108px}
+.stat-sel{background:var(--s2);border:1.5px solid var(--bdr2);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:13px;padding:7px 10px;outline:none;cursor:pointer;transition:border-color var(--tr)}
+.stat-sel:focus{border-color:var(--acc)}
+.timer-disp{font-family:var(--M);font-size:14px;font-weight:700;color:var(--or);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);padding:6px 13px;border-radius:7px;letter-spacing:1.5px;min-width:98px;text-align:center;transition:all var(--tr)}
+.timer-disp.run{color:var(--grn);background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);text-shadow:0 0 10px var(--grn-glow)}
+.room-badge{font-family:var(--M);font-size:10px;font-weight:700;background:rgba(34,211,180,.1);color:var(--acc);border:1px solid rgba(34,211,180,.25);padding:5px 12px;border-radius:20px;margin-left:auto}
+
+/* room stats bar */
+.room-stats{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;display:flex;flex-wrap:wrap}
+.rstat{flex:1;min-width:70px;text-align:center;padding:3px 8px;border-right:1px solid var(--bdr)}
+.rstat:last-child{border-right:none}
+.rstat-l{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:3px}
+.rstat-v{font-family:var(--M);font-size:17px;font-weight:700}
+
+/* ═══ TABLE WRAPPER ═══ */
+.twrap{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;margin-bottom:10px}
+.tbar{padding:8px 10px;background:var(--s2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:7px;flex-wrap:nowrap}
+.srch{background:var(--s1);border:1.5px solid var(--bdr2);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:14px;padding:8px 12px;outline:none;flex:1;min-width:0;height:42px;transition:all var(--tr)}
+.srch:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-glow)}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--s2);padding:9px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid var(--bdr);white-space:nowrap}
+tbody tr.drow{border-bottom:1px solid var(--bdr);cursor:pointer;transition:background var(--tr)}
+tbody tr.drow:last-child{border-bottom:none}
+tbody tr.drow:hover{background:rgba(34,211,180,.03)}
+tbody tr.erow{border-bottom:1px solid var(--bdr);background:rgba(34,211,180,.04)}
+tbody tr.crow{border-bottom:1px solid var(--bdr);background:var(--s2)}
+tbody td{padding:10px 10px;vertical-align:middle}
+.td-no{font-family:var(--M);font-size:11px;color:var(--txt3);width:28px;text-align:center}
+
+.ei{background:var(--s3);border:1.5px solid var(--acc);border-radius:6px;color:var(--txt);font-family:var(--F);font-size:13px;padding:5px 8px;outline:none;width:100%;box-shadow:0 0 0 2px var(--acc-glow)}
+.ei.en{font-family:var(--M);text-align:right;width:68px}
+.sc{font-family:var(--M);font-size:12px;font-weight:700;padding:2px 8px;border-radius:5px;display:inline-block;min-width:40px;text-align:right}
+.sp{color:var(--grn);background:rgba(16,185,129,.12)}
+.sz{color:var(--ylw);background:rgba(251,191,36,.12)}
+.sn{color:var(--red);background:rgba(239,68,68,.12)}
+.act-cell{display:flex;gap:4px;justify-content:center;align-items:center}
+.ic-btn{background:none;border:1.5px solid var(--bdr2);color:var(--txt3);border-radius:6px;width:34px;height:34px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all var(--tr);flex-shrink:0}
+.ic-btn:hover{color:var(--txt);border-color:var(--txt3)}
+.ic-btn.dn:hover{color:var(--red);border-color:var(--red);background:rgba(239,68,68,.08)}
+.ic-btn.dup:hover{color:var(--blue);border-color:var(--blue);background:rgba(59,130,246,.08)}
+.ic-btn.note-on{color:var(--ylw);border-color:var(--ylw);background:rgba(251,191,36,.08)}
+.nota-area{width:100%;background:var(--s1);border:1.5px solid var(--bdr2);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:12px;padding:7px 10px;outline:none;resize:none;min-height:50px;line-height:1.5}
+.nota-area:focus{border-color:var(--ylw)}
+
+/* ═══ QUICK ADD ═══ */
+.qa-wrap{position:relative;padding:10px 12px;background:var(--s2);border-top:1px solid var(--bdr)}
+.qa-row{display:flex;gap:8px;align-items:center}
+.qa-lbl{font-size:11px;font-weight:700;color:var(--acc);white-space:nowrap}
+.qa-inp{flex:1;background:var(--s1);border:1.5px solid var(--bdr2);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:14px;padding:9px 12px;outline:none;transition:border-color var(--tr);min-height:44px}
+.qa-inp:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-glow)}
+.qa-hint{font-size:10px;color:var(--txt3);margin-top:4px}
+
+/* ═══ VOICE BUTTON ═══ */
+.voice-btn{background:rgba(139,92,246,.1);border:1.5px solid var(--pur);color:var(--pur);border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;position:relative}
+.voice-btn:hover{background:rgba(139,92,246,.2);box-shadow:0 0 10px rgba(139,92,246,.4)}
+.voice-btn.listening{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);animation:voicePulse .7s ease-in-out infinite}
+.voice-btn.listening::after{content:'';position:absolute;inset:-4px;border-radius:11px;border:2px solid var(--red);opacity:.5;animation:voiceRing 1s ease-out infinite}
+@keyframes voicePulse{0%,100%{box-shadow:0 0 8px rgba(239,68,68,.4)}50%{box-shadow:0 0 18px rgba(239,68,68,.7)}}
+@keyframes voiceRing{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.4);opacity:0}}
+.voice-bar{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:9100;background:linear-gradient(135deg,var(--s2),var(--s3));border:1.5px solid var(--red);border-radius:14px;padding:11px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:280px;max-width:90vw;animation:tIn .2s ease;pointer-events:none}
+.voice-bar.hidden{display:none}
+.voice-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;animation:voicePulse .7s ease-in-out infinite}
+.voice-bar-txt{flex:1;font-size:13px;font-weight:600;color:var(--txt)}
+.voice-bar-prev{font-size:11px;color:var(--acc);font-family:var(--M);margin-top:2px;min-height:14px}
+.mic-modal{max-width:420px}
+.mic-step{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.mic-step:last-child{border-bottom:none}
+.mic-snum{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.mic-stxt{font-size:13px;color:var(--txt);line-height:1.6}
+.mic-stxt b{color:var(--acc)}
+.mic-stxt code{background:var(--s3);border:1px solid var(--bdr2);border-radius:4px;padding:1px 6px;font-family:var(--M);font-size:11px;color:var(--or)}
+.mic-warn{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--or);margin-bottom:12px;line-height:1.6}
+.mic-example{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:10px 13px;margin-top:10px}
+.mic-ex-title{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+.mic-ex-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px}
+.mic-ex-say{color:var(--acc);font-family:var(--M)}
+.mic-ex-arr{color:var(--txt3)}
+.mic-ex-res{color:var(--grn)}
+.qa-sug{position:absolute;bottom:100%;left:12px;right:12px;background:var(--s1);border:1px solid var(--bdr2);border-radius:10px;overflow:hidden;max-height:180px;overflow-y:auto;z-index:50;box-shadow:0 -10px 30px rgba(0,0,0,.5);display:none}
+.qa-item{padding:9px 13px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bdr)}
+.qa-item:last-child{border-bottom:none}.qa-item:hover{background:var(--s2)}
+.qa-tag{font-size:10px;font-family:var(--M);padding:1px 5px;border-radius:3px;flex-shrink:0}
+.qa-tag.ex{background:rgba(251,191,36,.15);color:var(--ylw)}.qa-tag.pr{background:rgba(34,211,180,.1);color:var(--acc)}
+.qa-merge{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:8px 12px;margin-top:6px;font-size:12px;color:var(--or);display:none;align-items:center;gap:8px;flex-wrap:wrap}
+.qa-merge.show{display:flex}
+
+/* ═══ SISA LIST ═══ */
+.sisa-toggle{width:100%;padding:10px 14px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:var(--txt3);margin-bottom:6px;transition:color var(--tr)}
+.sisa-toggle:hover{color:var(--txt)}.sisa-toggle.open{color:var(--acc)}
+.sisa-body{display:none;background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.sisa-body.open{display:block}
+.sisa-item{display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bdr);gap:10px}
+.sisa-item:last-child{border-bottom:none}
+.sisa-nm{font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sisa-eq{font-family:var(--M);font-size:10px;color:var(--txt3);flex-shrink:0}
+
+/* ═══ BUTTONS ═══ */
+.btn{padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;font-family:var(--F);cursor:pointer;border:1.5px solid;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;line-height:1;transition:all var(--tr)}
+.btn:disabled{opacity:.4;cursor:not-allowed}.btn:active{transform:scale(.97)}
+.bg{background:transparent;border-color:var(--bdr2);color:var(--txt3)}.bg:hover:not(:disabled){border-color:var(--txt3);color:var(--txt);background:var(--s3)}
+.ba{background:var(--acc);border-color:var(--acc);color:#080c12;font-weight:700}.ba:hover:not(:disabled){opacity:.88;box-shadow:0 0 12px var(--acc-glow)}
+.bbl{background:rgba(59,130,246,.1);border-color:var(--blue);color:var(--blue)}.bbl:hover:not(:disabled){background:rgba(59,130,246,.2);box-shadow:0 0 8px rgba(59,130,246,.3)}
+.bgr{background:rgba(16,185,129,.1);border-color:var(--grn);color:var(--grn)}.bgr:hover:not(:disabled){background:rgba(16,185,129,.2)}
+.bor{background:rgba(245,158,11,.1);border-color:var(--or);color:var(--or)}.bor:hover:not(:disabled){background:rgba(245,158,11,.2)}
+.br{background:transparent;border-color:var(--bdr2);color:var(--txt3)}.br:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+.bpur{background:rgba(139,92,246,.1);border-color:var(--pur);color:var(--pur)}.bpur:hover:not(:disabled){background:rgba(139,92,246,.2)}
+.btn-full{width:100%;justify-content:center;margin-bottom:7px;padding:10px}
+
+/* ═══ MODALS ═══ */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;display:none;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(5px)}
+.ov.on{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bdr2);border-radius:16px;width:100%;max-width:500px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.7);animation:mIn .22s ease}
+.modal.wide{max-width:580px}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.mh{padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.mh h2{font-size:14px;font-weight:700}
+.mh-r{display:flex;gap:6px;align-items:center}
+.mb{padding:14px 16px;overflow-y:auto;flex:1}
+.mf{padding:10px 16px;border-top:1px solid var(--bdr);display:flex;gap:7px;justify-content:flex-end;flex-shrink:0;flex-wrap:wrap}
+.xbtn{background:none;border:none;color:var(--txt3);font-size:20px;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:all var(--tr)}
+.xbtn:hover{color:var(--red);background:rgba(239,68,68,.1)}
+
+/* Rekap styles */
+.rmeta{background:var(--s2);border:1px solid var(--bdr);border-radius:9px;padding:10px 14px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rm-g{display:flex;flex-direction:column;gap:2px}
+.rm-l{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.rm-v{font-size:13px;color:var(--txt);font-weight:600}
+.rrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid var(--bdr);margin-bottom:5px;background:var(--s2)}
+.rno{font-family:var(--M);font-size:10px;color:var(--txt3);width:20px;flex-shrink:0}
+.rnm{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rchips{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.chip{font-family:var(--M);font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--bdr);color:var(--txt3)}
+.chip.ca{border-color:rgba(59,130,246,.3);color:var(--blue)}.chip.cr{border-color:rgba(251,191,36,.3);color:var(--ylw)}
+.chip.cs{font-weight:700;font-size:11px;padding:2px 9px}
+.totals{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+.tot{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center}
+.tot-l{font-size:10px;color:var(--txt3);text-transform:uppercase;margin-bottom:4px;font-weight:700}
+.tot-v{font-family:var(--M);font-size:20px;font-weight:700}
+.warnbox{padding:10px 13px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:var(--or);margin-top:10px;line-height:1.6}
+
+/* History */
+.hfilter{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.fc{padding:8px 15px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--bdr2);background:transparent;color:var(--txt3);font-family:var(--F);min-height:40px;transition:all var(--tr)}
+.fc:hover{border-color:var(--txt3);color:var(--txt)}
+.fc.on{background:var(--acc);border-color:var(--acc);color:#080c12}
+.hempty{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);padding:44px 24px;text-align:center;color:var(--txt3);font-size:13px;line-height:1.7}
+.hcard{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px 16px;margin-bottom:10px;transition:border-color var(--tr)}
+.hcard:hover{border-color:var(--acc)}
+.hcard-top{display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap}
+.hroom{font-family:var(--M);font-size:10px;background:rgba(34,211,180,.1);color:var(--acc);border:1px solid rgba(34,211,180,.25);padding:3px 10px;border-radius:20px}
+.hnm{font-size:15px;font-weight:700;flex:1}
+.hmeta{font-size:11px;color:var(--txt3);font-family:var(--M);margin-bottom:10px;line-height:1.6}
+.hacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.hacts .btn{flex:1;justify-content:center;min-height:40px}
+
+/* Rekap Harian */
+.rh-section{margin-bottom:20px}
+.rh-head{font-size:12px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.rh-head::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.rh-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.rhs{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:12px;text-align:center}
+.rhs-l{font-size:10px;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.rhs-v{font-family:var(--M);font-size:18px;font-weight:700}
+.date-filter{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.date-inp{background:var(--s2);border:1.5px solid var(--bdr2);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:13px;padding:6px 11px;outline:none;transition:border-color var(--tr)}
+.date-inp:focus{border-color:var(--acc)}
+
+/* ═══ STATISTIK PANEL ═══ */
+.stat-section{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px 16px;margin-bottom:14px}
+.ss-title{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ss-title::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bar-lbl{font-size:12px;color:var(--txt);width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:14px;background:var(--s2);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--acc);transition:width .4s}
+.bar-val{font-family:var(--M);font-size:11px;color:var(--txt3);width:40px;text-align:right;flex-shrink:0}
+.stat-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.sn-card{background:var(--s2);border:1px solid var(--bdr);border-radius:9px;padding:10px 12px;text-align:center}
+.sn-l{font-size:10px;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:4px;letter-spacing:.5px}
+.sn-v{font-family:var(--M);font-size:18px;font-weight:700}
+
+/* ═══ INVENTARIS GLOBAL (tab khusus) ═══ */
+.inv-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.inv-srch-w{position:relative;flex:1;min-width:180px}
+.inv-srch{width:100%;background:var(--s2);border:1.5px solid var(--bdr2);border-radius:var(--r);color:var(--txt);font-family:var(--F);font-size:13px;padding:8px 12px 8px 34px;outline:none;transition:all var(--tr)}
+.inv-srch:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-glow)}
+.inv-srch-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:13px;pointer-events:none}
+.fbtns{display:flex;gap:6px;flex-wrap:wrap}
+.fbtn{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--bdr2);background:transparent;color:var(--txt3);transition:all var(--tr)}
+.fbtn:hover{color:var(--txt);background:var(--s3)}.fbtn.on{background:var(--acc);color:#080c12;border-color:var(--acc)}
+.inv-twrap{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden}
+.inv-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.inv-tbl thead th{background:var(--s2);padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;border-bottom:1px solid var(--bdr);white-space:nowrap}
+.inv-tbl tbody tr.drow{border-bottom:1px solid var(--bdr);transition:background var(--tr)}
+.inv-tbl tbody tr.drow:hover{background:rgba(34,211,180,.03)}
+.inv-tbl tbody tr.drow:last-child{border-bottom:none}
+.inv-tbl td{padding:10px 12px;color:var(--txt2);vertical-align:middle}
+.inv-tbl td:first-child{color:var(--txt);font-weight:500}
+.stok-b{display:inline-flex;align-items:center;gap:3px;font-family:var(--M);font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px}
+.stok-b.ok{background:rgba(16,185,129,.12);color:var(--grn)}.stok-b.low{background:rgba(245,158,11,.12);color:var(--or)}.stok-b.empty{background:rgba(239,68,68,.12);color:var(--red)}
+.kat-b{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.4px;text-transform:uppercase}
+.kat-b.alkes{background:rgba(59,130,246,.12);color:var(--blue)}.kat-b.obat{background:rgba(139,92,246,.12);color:var(--pur)}.kat-b.bahan{background:rgba(16,185,129,.12);color:var(--grn)}
+.inv-form-card{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);padding:16px;margin-bottom:14px;display:none}
+.inv-form-card.open{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.fgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px}
+.field input,.field select{background:var(--s2);border:1.5px solid var(--bdr2);border-radius:var(--r);color:var(--txt);font-family:var(--F);font-size:13px;padding:8px 11px;outline:none;transition:all var(--tr)}
+.field input:focus,.field select:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-glow)}
+.field input.err,.field select.err{border-color:var(--red);box-shadow:0 0 0 2px var(--red-glow)}
+
+/* ═══ TOOLS PANEL ═══ */
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.tool-card{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px}
+.tool-card.full{grid-column:1/-1}
+.tc-title{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.health-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr);font-size:12px}
+.health-row:last-child{border-bottom:none}
+.health-key{color:var(--txt3);font-family:var(--M);font-size:11px}
+.health-val{font-family:var(--M);font-size:12px;font-weight:600}
+.pbar{width:100%;height:5px;background:var(--s3);border-radius:3px;margin-top:8px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:3px;background:var(--acc)}.pbar-fill.warn{background:var(--ylw)}.pbar-fill.danger{background:var(--red)}
+.log-row{display:flex;gap:7px;padding:7px 10px;border-bottom:1px solid var(--bdr);font-size:11px;font-family:var(--M);align-items:flex-start}
+.log-row:last-child{border-bottom:none}
+.log-t{color:var(--txt3);flex-shrink:0;font-size:10px;padding-top:1px}
+.log-m{color:var(--txt);flex:1;word-break:break-word;line-height:1.5}
+.log-tp{padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;flex-shrink:0}
+.lt-error{background:rgba(239,68,68,.15);color:var(--red)}.lt-promise{background:rgba(245,158,11,.15);color:var(--or)}
+.lt-warn{background:rgba(251,191,36,.15);color:var(--ylw)}.lt-info{background:rgba(59,130,246,.15);color:var(--blue)}
+
+/* ═══ PRESET / TEMPLATE ═══ */
+.ptabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.ptab{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bdr2);background:transparent;color:var(--txt3);font-family:var(--F);transition:all var(--tr)}
+.ptab:hover{color:var(--txt)}.ptab.on{background:var(--acc);border-color:var(--acc);color:#080c12}
+.plist{border:1.5px solid var(--bdr);border-radius:9px;overflow:hidden;max-height:270px;overflow-y:auto}
+.pirow{display:flex;align-items:center;gap:9px;padding:9px 13px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background var(--tr)}
+.pirow:last-child{border-bottom:none}.pirow:hover,.pirow.on{background:rgba(34,211,180,.05)}
+.pck{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--bdr2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px}
+.pirow.on .pck{background:var(--acc);border-color:var(--acc);color:#080c12;font-weight:800}
+.pinm{font-size:13px;flex:1}
+.pidel{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:16px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:color var(--tr)}
+.pidel:hover{color:var(--red)}
+.k-inp{width:100%;background:var(--s2);border:1.5px solid var(--bdr2);border-radius:7px;padding:8px 12px;color:var(--txt);font-family:var(--F);font-size:13px;outline:none;margin-bottom:8px;transition:border-color var(--tr)}
+.k-inp:focus{border-color:var(--acc)}
+.k-row{display:flex;gap:7px}
+.plcard{display:flex;align-items:center;gap:8px;padding:11px 13px;border-radius:8px;border:1px solid var(--bdr);background:var(--s2);margin-bottom:7px}
+.plnm{flex:1;font-size:14px;font-weight:600}.plcnt{font-size:11px;color:var(--txt3);font-family:var(--M)}
+.be-list{max-height:270px;overflow-y:auto;border:1px solid var(--bdr);border-radius:8px;overflow:hidden}
+.be-row{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background var(--tr)}
+.be-row:last-child{border-bottom:none}.be-row:hover{background:var(--s2)}.be-row.on{background:rgba(34,211,180,.04)}
+.be-chk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--bdr2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px}
+.be-row.on .be-chk{background:var(--acc);border-color:var(--acc);color:#080c12;font-weight:800}
+.be-nm{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.be-cur{font-family:var(--M);font-size:11px;color:var(--txt3);flex-shrink:0}
+.be-set{display:flex;gap:8px;padding:10px 0;flex-wrap:wrap;align-items:center}
+.be-set label{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px}
+.be-num{background:var(--s2);border:1.5px solid var(--bdr2);border-radius:6px;color:var(--txt);font-family:var(--M);font-size:13px;padding:5px 9px;outline:none;width:72px;text-align:right}
+.be-num:focus{border-color:var(--acc)}
+
+/* ═══ NEXT PATIENT PREP ═══ */
+.np-card{background:var(--s1);border:1.5px solid rgba(139,92,246,.3);border-radius:var(--rl);overflow:hidden;margin-bottom:12px}
+.np-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(139,92,246,.07);border-bottom:1px solid rgba(139,92,246,.2);cursor:pointer;user-select:none}
+.np-title{font-size:12px;font-weight:700;color:var(--pur);text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:7px}
+.np-badge{background:rgba(139,92,246,.15);color:var(--pur);font-size:10px;font-family:var(--M);padding:2px 7px;border-radius:10px;font-weight:700}
+.np-toggle-icon{font-size:13px;color:var(--pur);transition:transform .2s}
+.btn-np-start{background:linear-gradient(135deg,var(--grn),var(--grn2));border:none;color:#fff;font-family:var(--F);font-size:11px;font-weight:700;padding:5px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;letter-spacing:.3px;transition:all var(--tr);box-shadow:0 0 10px rgba(16,185,129,.3)}
+.btn-np-start:hover{opacity:.88;box-shadow:0 0 16px rgba(16,185,129,.5);transform:translateY(-1px)}
+.np-body{padding:12px 14px;display:block}
+.np-body.collapsed{display:none}
+.np-fields{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.np-field{display:flex;flex-direction:column;gap:5px}
+.np-label{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px}
+.np-inp{background:var(--s2);border:1.5px solid rgba(139,92,246,.25);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:13px;padding:7px 11px;outline:none;transition:border-color var(--tr)}
+.np-inp:focus{border-color:var(--pur);box-shadow:0 0 0 2px rgba(139,92,246,.2)}
+.np-inp-wide{width:200px}.np-inp-med{width:150px}
+.np-checklist-title{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.np-checks{display:flex;flex-wrap:wrap;gap:6px}
+.np-check-item{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;cursor:pointer;transition:all var(--tr);user-select:none}
+.np-check-item:hover{border-color:rgba(139,92,246,.4)}
+.np-check-item.checked{background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.4)}
+.np-check-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--bdr2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;transition:all var(--tr)}
+.np-check-item.checked .np-check-box{background:var(--pur);border-color:var(--pur);color:#fff}
+.np-check-lbl{font-size:12px;font-weight:500}
+.np-notes-wrap{margin-top:10px}
+.np-notes{width:100%;background:var(--s2);border:1.5px solid rgba(139,92,246,.2);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:12px;padding:8px 11px;outline:none;resize:none;min-height:48px;line-height:1.5;transition:border-color var(--tr)}
+.np-notes:focus{border-color:var(--pur)}
+.np-clear-btn{margin-top:9px;background:none;border:1px solid var(--bdr2);color:var(--txt3);border-radius:6px;padding:5px 11px;font-size:11px;font-family:var(--F);cursor:pointer;transition:all var(--tr)}
+.np-clear-btn:hover{border-color:var(--red);color:var(--red)}
+.np-progress{display:flex;align-items:center;gap:8px;margin-top:2px}
+.np-progress-bar-wrap{flex:1;height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.np-progress-bar{height:100%;background:var(--pur);border-radius:2px;transition:width .3s}
+.np-progress-txt{font-family:var(--M);font-size:10px;color:var(--pur);white-space:nowrap}
+
+/* ═══ RETUR CEPAT MODAL ═══ */
+.retur-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bdr);transition:background var(--tr)}
+.retur-item:last-child{border-bottom:none}
+.retur-item.done{background:rgba(16,185,129,.04)}
+.retur-item.active{background:rgba(34,211,180,.07);border-left:3px solid var(--acc)}
+.retur-nm{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.retur-diambil{font-family:var(--M);font-size:11px;color:var(--txt3);flex-shrink:0;min-width:55px;text-align:right}
+.retur-inp-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.retur-inp{background:var(--s3);border:1.5px solid var(--bdr2);border-radius:7px;color:var(--txt);font-family:var(--M);font-size:14px;padding:6px 9px;outline:none;width:72px;text-align:right;transition:border-color var(--tr)}
+.retur-inp:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-glow)}
+.retur-inp.active-inp{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-glow)}
+.retur-sisa{font-family:var(--M);font-size:11px;min-width:38px;text-align:right;flex-shrink:0}
+.retur-check{font-size:14px;flex-shrink:0;width:20px;text-align:center}
+.retur-hint{background:rgba(34,211,180,.06);border:1px solid rgba(34,211,180,.18);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.6}
+.retur-hint b{color:var(--acc)}
+.retur-progress{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--s2);border-bottom:1px solid var(--bdr)}
+.retur-prog-bar-wrap{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.retur-prog-bar{height:100%;background:var(--acc);border-radius:3px;transition:width .3s}
+.retur-prog-txt{font-family:var(--M);font-size:10px;color:var(--acc);white-space:nowrap}
+.retur-semua-btn{background:rgba(16,185,129,.1);border:1px solid var(--grn);color:var(--grn);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--F);cursor:pointer;font-weight:600;transition:all var(--tr)}
+.retur-semua-btn:hover{background:rgba(16,185,129,.2)}
+.retur-zero-btn{background:rgba(59,130,246,.08);border:1px solid var(--blue);color:var(--blue);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--F);cursor:pointer;font-weight:600;transition:all var(--tr)}
+.retur-zero-btn:hover{background:rgba(59,130,246,.18)}
+
+/* ═══ NP ITEMS (barang persiapan) ═══ */
+.np-items-title{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin:12px 0 7px;display:flex;align-items:center;justify-content:space-between}
+.np-items-list{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.np-item-row{display:flex;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid var(--bdr)}
+.np-item-row:last-child{border-bottom:none}
+.np-item-nm{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.np-item-qty{font-family:var(--M);font-size:11px;color:var(--acc);background:rgba(34,211,180,.1);border:1px solid rgba(34,211,180,.2);padding:2px 7px;border-radius:4px;flex-shrink:0}
+.np-item-src{font-size:10px;color:var(--txt3);flex-shrink:0}
+.np-item-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:2px 5px;border-radius:4px;transition:color var(--tr);flex-shrink:0}
+.np-item-del:hover{color:var(--red)}
+.np-add-row{display:flex;gap:6px;padding:8px 11px;background:rgba(139,92,246,.05);border-top:1px solid rgba(139,92,246,.15)}
+.np-add-inp{flex:1;background:var(--s1);border:1.5px solid rgba(139,92,246,.3);border-radius:6px;color:var(--txt);font-family:var(--F);font-size:12px;padding:7px 10px;outline:none;transition:border-color var(--tr)}
+.np-add-inp:focus{border-color:var(--pur);box-shadow:0 0 0 2px rgba(139,92,246,.15)}
+.np-add-qty{width:60px;background:var(--s1);border:1.5px solid rgba(139,92,246,.3);border-radius:6px;color:var(--txt);font-family:var(--M);font-size:13px;padding:7px 8px;outline:none;text-align:center;transition:border-color var(--tr)}
+.np-add-qty:focus{border-color:var(--pur);box-shadow:0 0 0 2px rgba(139,92,246,.15)}
+.np-transfer-banner{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:9px 12px;margin-bottom:10px;display:none}
+.np-transfer-banner.show{display:block}
+.np-transfer-banner-title{font-size:11px;font-weight:700;color:var(--or);margin-bottom:6px}
+.np-transfer-item{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:2px 0}
+.np-transfer-nm{color:var(--txt);flex:1}
+.np-transfer-qty{font-family:var(--M);font-size:11px;color:var(--or)}
+
+/* Share/Import */
+.codebox{background:var(--s2);border:1px solid var(--bdr);border-radius:7px;padding:9px 11px;font-family:var(--M);font-size:10px;color:var(--txt3);word-break:break-all;max-height:70px;overflow-y:auto;margin-bottom:9px;line-height:1.5}
+.snote{font-size:12px;color:var(--txt3);line-height:1.7;margin-bottom:10px}
+.step-row{display:flex;gap:9px;margin-bottom:9px;align-items:flex-start}
+.snum{width:21px;height:21px;border-radius:50%;background:var(--acc);color:#080c12;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.qrbox{display:flex;justify-content:center;align-items:center;padding:18px;background:var(--s2);border-radius:9px;margin-bottom:10px;min-height:220px}
+.imp-ta{width:100%;background:var(--s2);border:1.5px solid var(--bdr2);border-radius:8px;padding:9px 12px;font-family:var(--M);font-size:12px;color:var(--txt);outline:none;resize:vertical;min-height:88px;line-height:1.5}
+.imp-ta:focus{border-color:var(--acc)}
+.rcard{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:9px;border:1.5px solid var(--bdr);background:var(--s2);cursor:pointer;margin-bottom:8px;transition:all var(--tr)}
+.rcard:hover{border-color:var(--acc);background:rgba(34,211,180,.04)}
+
+/* Sec header */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.sec-title{font-size:14px;font-weight:700;color:var(--txt)}
+.sec-acts{display:flex;gap:7px;flex-wrap:wrap}
+
+/* More menu */
+.more-menu{position:relative;display:inline-block}
+.more-btn{background:var(--s2);border:1.5px solid var(--bdr2);border-radius:8px;color:var(--txt3);font-size:19px;cursor:pointer;min-width:42px;height:42px;display:flex;align-items:center;justify-content:center;line-height:1;transition:all var(--tr)}
+.more-btn:hover{color:var(--txt);border-color:var(--txt3)}
+.more-drop{position:absolute;top:calc(100% + 6px);right:0;background:var(--s1);border:1px solid var(--bdr2);border-radius:12px;overflow:hidden;z-index:200;min-width:180px;box-shadow:0 14px 40px rgba(0,0,0,.6);display:none}
+.more-drop.open{display:block;animation:fadeIn .15s ease}
+.mdrop-item{display:flex;align-items:center;gap:10px;padding:12px 16px;border:none;background:none;width:100%;text-align:left;cursor:pointer;font-family:var(--F);font-size:13px;font-weight:500;color:var(--txt);border-bottom:1px solid var(--bdr);transition:background var(--tr)}
+.mdrop-item:last-child{border-bottom:none}.mdrop-item:hover{background:var(--s2)}
+.mdrop-item.danger:hover{color:var(--red)}
+.mdrop-item .mi-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.mdrop-sep{height:1px;background:var(--bdr);margin:2px 0}
+
+/* Responsive */
+@media(max-width:860px){.stat-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){
+  .stat-cards{grid-template-columns:1fr 1fr}
+  main{padding:10px 12px}
+  .hdr{padding:0 12px;height:52px}
+  .tabs-wrap{padding:0 12px}
+  .tab{padding:11px 13px;font-size:12px}
+  .pcard{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:11px}
+  .pcard .pc-full{grid-column:1/-1}
+  .pi-n,.pi-t{width:100%}
+  .pi,.stat-sel{width:100%;font-size:15px;padding:10px 12px}
+  .timer-row{grid-column:1/-1;display:flex;align-items:center;gap:8px}
+  .timer-disp{flex:1;font-size:14px;text-align:center}
+  .room-badge{display:none}
+  .rh-summary{grid-template-columns:1fr 1fr}
+  .stat-nums{grid-template-columns:1fr 1fr}
+  .bar-lbl{width:110px}
+  .ov{padding:10px}
+  .modal,.modal.wide{max-width:100%;border-radius:18px 18px 0 0;position:fixed;bottom:0;left:0;right:0;max-height:88vh;margin:0;border-bottom:none}
+  .mf .btn{flex:1;justify-content:center}
+  .tools-grid{grid-template-columns:1fr}
+  .tool-card.full{grid-column:auto}
+  .fgrid{grid-template-columns:1fr 1fr}
+  #toastC{right:10px;left:10px;bottom:12px}
+  .toast{max-width:100%;text-align:center}
+  .btn{min-height:42px}
+}
+</style>
+</head>
+<body>
+
+<div class="offline-banner" id="offlineBanner" role="alert">⚠️ Mode offline aktif — semua data tersimpan lokal</div>
+<div id="toastC" aria-live="polite"></div>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="hdr">
+  <div class="hdr-logo">OK</div>
+  <div class="hdr-info">
+    <div class="hdr-title">OK Operasi · Alkes &amp; Obat</div>
+    <div class="hdr-sub" id="saveStat">Siap</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-clock" id="clock">00:00:00</div>
+    <button class="btn bbl" onclick="openShare()" style="min-height:38px">📤</button>
+    <button class="btn ba"  onclick="openImport()" style="min-height:38px">📥 Import</button>
+  </div>
+</header>
+
+<!-- ═══════════ TABS ═══════════ -->
+<nav class="tabs-wrap" role="tablist"><div class="tabs" id="tabs"></div></nav>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main id="main"></main>
+
+<!-- ══════════════════════════════════
+     MODALS
+══════════════════════════════════ -->
+<!-- Rekap Selesai -->
+<div class="ov" id="ovSel"><div class="modal">
+  <div class="mh"><h2>🏁 Rekap Operasi</h2><button class="xbtn" onclick="CM('ovSel')">×</button></div>
+  <div class="mb" id="selBody"></div>
+  <div class="mf" id="selFoot"></div>
+</div></div>
+
+<!-- History Detail -->
+<div class="ov" id="ovHD"><div class="modal">
+  <div class="mh"><h2>📄 Detail Riwayat</h2><button class="xbtn" onclick="CM('ovHD')">×</button></div>
+  <div class="mb" id="hdBody"></div>
+  <div class="mf" id="hdFoot"></div>
+</div></div>
+
+<!-- Restore -->
+<div class="ov" id="ovRst"><div class="modal">
+  <div class="mh"><h2>♻️ Pulihkan ke Kamar</h2><button class="xbtn" onclick="CM('ovRst')">×</button></div>
+  <div class="mb" id="rstBody"></div>
+  <div class="mf"><button class="btn bg" onclick="CM('ovRst')">Batal</button></div>
+</div></div>
+
+<!-- Preset -->
+<div class="ov" id="ovPre"><div class="modal wide">
+  <div class="mh"><h2>📦 Pilih Preset</h2>
+    <div class="mh-r">
+      <button class="btn bbl" style="font-size:11px;padding:5px 10px" onclick="openKelola()">⚙️ Kelola</button>
+      <button class="xbtn" onclick="CM('ovPre')">×</button>
+    </div>
+  </div>
+  <div class="mb">
+    <input class="k-inp" id="preSearchInp" placeholder="🔍 Cari item..." oninput="renderPresetBody(this.value)" style="margin-bottom:10px"/>
+    <div id="preBody"></div>
+  </div>
+  <div class="mf">
+    <button class="btn bg" onclick="CM('ovPre')">Batal</button>
+    <button class="btn bg" onclick="checkAllP()" style="font-size:11px">☑ Semua</button>
+    <button class="btn ba" onclick="applyPreset()">＋ Tambahkan</button>
+  </div>
+</div></div>
+
+<!-- Kelola Preset -->
+<div class="ov" id="ovKel"><div class="modal wide">
+  <div class="mh"><h2>⚙️ Kelola Preset</h2><button class="xbtn" onclick="CM('ovKel')">×</button></div>
+  <div class="mb" id="kelBody"></div>
+  <div class="mf" id="kelFoot"></div>
+</div></div>
+
+<!-- Template -->
+<div class="ov" id="ovTpl"><div class="modal wide">
+  <div class="mh"><h2>📑 Template Kamar</h2><button class="xbtn" onclick="CM('ovTpl')">×</button></div>
+  <div class="mb" id="tplBody"></div>
+  <div class="mf" id="tplFoot"></div>
+</div></div>
+
+<!-- Bulk Edit -->
+<div class="ov" id="ovBE"><div class="modal wide">
+  <div class="mh"><h2>✏️ Bulk Edit</h2>
+    <div class="mh-r">
+      <button class="btn bg" style="font-size:11px;padding:5px 10px" id="beSelAll" onclick="toggleBeAll()">☑ Semua</button>
+      <button class="xbtn" onclick="CM('ovBE')">×</button>
+    </div>
+  </div>
+  <div class="mb" id="beBody"></div>
+  <div class="mf" id="beFoot"></div>
+</div></div>
+
+<!-- Retur Cepat -->
+<div class="ov" id="ovRC"><div class="modal wide">
+  <div class="mh"><h2>↩ Retur Cepat</h2>
+    <div class="mh-r">
+      <button class="retur-semua-btn" onclick="rcSemuaRetur()">✓ Semua Retur</button>
+      <button class="retur-zero-btn" style="margin-left:5px" onclick="rcSemuaNol()">✕ Semua Nol</button>
+      <button class="xbtn" style="margin-left:5px" onclick="CM('ovRC')">×</button>
+    </div>
+  </div>
+  <div class="retur-progress">
+    <div class="retur-prog-bar-wrap"><div class="retur-prog-bar" id="rcProgBar" style="width:0%"></div></div>
+    <span class="retur-prog-txt" id="rcProgTxt">0 / 0 item</span>
+  </div>
+  <div class="mb" style="padding:10px 14px 6px">
+    <div class="retur-hint">Ketik jumlah retur lalu tekan <b>Enter</b> untuk lanjut ke item berikutnya. <b>Tab</b> = loncat. <b>R</b> = retur semua (saat input aktif).</div>
+  </div>
+  <div class="mb" id="rcBody" style="padding:0;max-height:55vh;overflow-y:auto"></div>
+  <div class="mf" id="rcFoot"></div>
+</div></div>
+
+<!-- Share -->
+<div class="ov" id="ovShr"><div class="modal">
+  <div class="mh"><h2>📤 Bagikan Semua Data</h2><button class="xbtn" onclick="CM('ovShr')">×</button></div>
+  <div class="mb">
+    <div id="shrSummary" style="background:var(--s2);border:1px solid var(--bdr);border-radius:9px;padding:10px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center"></div>
+    <div class="step-row"><div class="snum">1</div><span class="snote">Scan QR dari HP lain untuk terima semua data sekaligus.</span></div>
+    <div class="qrbox" id="qrBox"></div>
+    <p style="text-align:center;font-size:11px;margin-bottom:12px" id="qrLbl">—</p>
+    <div class="step-row"><div class="snum">2</div><span class="snote">Atau Salin Kode lalu Import di HP penerima.</span></div>
+    <div class="codebox" id="allCT">—</div>
+    <div style="display:flex;gap:7px">
+      <button class="btn bgr" style="flex:1;justify-content:center" onclick="cpTxt('allCT')">📋 Salin Kode</button>
+      <button class="btn ba"  style="flex:1;justify-content:center" onclick="sWA()">🟢 Kirim WA</button>
+    </div>
+  </div>
+  <div class="mf"><button class="btn bg" onclick="CM('ovShr')">Tutup</button></div>
+</div></div>
+
+<!-- Import -->
+<div class="ov" id="ovImp"><div class="modal">
+  <div class="mh"><h2>📥 Import Data</h2><button class="xbtn" onclick="CM('ovImp')">×</button></div>
+  <div class="mb">
+    <p class="snote">Tempel kode QR atau kode teks dari HP lain.</p>
+    <textarea class="imp-ta" id="impTA" placeholder="Tempel kode di sini..."></textarea>
+    <p style="font-size:12px;color:var(--red);margin-top:7px;display:none" id="impErr">❌ Kode tidak valid.</p>
+  </div>
+  <div class="mf">
+    <button class="btn bg" onclick="CM('ovImp')">Batal</button>
+    <button class="btn ba" onclick="doImport()">📥 Muat Data</button>
+  </div>
+</div></div>
+
+<!-- Voice Recording Bar -->
+<div class="voice-bar hidden" id="voiceBar">
+  <div class="voice-dot"></div>
+  <div style="flex:1">
+    <div class="voice-bar-txt" id="voiceBarTxt">🎤 Mendengarkan...</div>
+    <div class="voice-bar-prev" id="voiceBarPrev"></div>
+  </div>
+  <button onclick="stopVoiceExt()" style="background:none;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;pointer-events:auto">✕ Stop</button>
+</div>
+
+<!-- Modal Izin Mikrofon -->
+<div class="ov" id="ovMic"><div class="modal mic-modal">
+  <div class="mh"><h2 id="micModalTitle">🎤 Izin Mikrofon</h2><button class="xbtn" onclick="CM('ovMic')">×</button></div>
+  <div class="mb" id="micModalBody"></div>
+  <div class="mf" id="micModalFoot"></div>
+</div></div>
+
+<script>
+/* ══════════════════════════════════════
+   §1 · CONSTANTS
+══════════════════════════════════════ */
+const ROOMS=6, VER=8;
+const KEY_DATA='ok_data2', KEY_HIST='ok_hist', KEY_LOGS='ok_log', KEY_INV='ok_inv2';
+const KEY_BAK=['ok_bak_0','ok_bak_1','ok_bak_2'], KEY_BAKIDX='ok_bakidx';
+const MAX_HIST=200, MAX_LOGS=100, MAX_UNDO=15;
+const BAK_INTV=30*60*1000, SAVE_DELAY=600, SRCH_DELAY=200;
+const STATUS_MAP={kosong:'Kosong',persiapan:'Persiapan',berlangsung:'Berlangsung',darurat:'⚠ Darurat',selesai:'Selesai'};
+
+const DEFAULT_PRESETS=[
+  {id:'p1',name:'Standar Umum',items:['Kasa Steril','Sarung Tangan Steril','Spuit 3cc','Spuit 5cc','Spuit 10cc','Benang Absorbable','Benang Non-Absorbable','NaCl 0.9% 500ml','Betadine Solution','Infus Set','Jarum IV (Abocath)','Plester Medis','Alkohol 70%','Kapas Steril']},
+  {id:'p2',name:'Ortopedi',items:['Kasa Steril','Sarung Tangan Steril','Spuit 5cc','Spuit 10cc','NaCl 0.9%','Benang Non-Absorbable','Betadine','Tourniquet','Elektrode Kauter','Drape Steril','Mess/Scalpel','Bone Wax','Drain T']},
+  {id:'p3',name:'Laparotomi',items:['Kasa Laparotomi','Sarung Tangan Steril','Spuit 10cc','Benang Absorbable','Benang Non-Absorbable','NaCl 0.9% 1L','Betadine','Infus Set','Drain Penrose','Elektrode Kauter','Drape Steril','Mess/Scalpel','Klem Kocher','Klem Allis']},
+  {id:'p4',name:'Anestesi',items:['Propofol 200mg','Fentanyl 0.05mg','Lidokain 2%','Midazolam 5mg','Atropine','Spuit 5cc','Spuit 10cc','Masker Oksigen','Endotracheal Tube','Laringoskop']}
+];
+
+/* ══════════════════════════════════════
+   §2 · ERROR LOGGING
+══════════════════════════════════════ */
+function addLog(type,msg,extra){
+  try{
+    const logs=getSafeLogs();
+    logs.unshift({type,msg:String(msg).slice(0,300),extra:extra||'',time:new Date().toISOString()});
+    if(logs.length>MAX_LOGS)logs.length=MAX_LOGS;
+    localStorage.setItem(KEY_LOGS,JSON.stringify(logs));
+  }catch(e){}
+}
+function getSafeLogs(){try{const d=JSON.parse(localStorage.getItem(KEY_LOGS));return Array.isArray(d)?d:[];}catch(e){return[];}}
+window.onerror=(msg,src,line)=>addLog('error',msg,`${src}:${line}`);
+window.addEventListener('unhandledrejection',e=>addLog('promise',e.reason?.message||String(e.reason)));
+
+/* ══════════════════════════════════════
+   §3 · STORAGE SYSTEM
+══════════════════════════════════════ */
+function safeParse(str,fb){if(!str)return fb;try{return JSON.parse(str);}catch(e){return fb;}}
+function safeSet(key,val){
+  try{localStorage.setItem(key,JSON.stringify(val));return true;}
+  catch(e){
+    if(e.name==='QuotaExceededError')showToast('⚠ Penyimpanan penuh! Export data lalu hapus riwayat lama.',true);
+    else addLog('error','localStorage fail: '+e.message);
+    return false;
+  }
+}
+function getHistory(){const d=safeParse(localStorage.getItem(KEY_HIST),null);return(d&&Array.isArray(d.entries))?d:{entries:[]};}
+function saveHistory(H){if(H.entries.length>MAX_HIST)H.entries=H.entries.slice(0,MAX_HIST);safeSet(KEY_HIST,H);}
+
+let bakIdx=parseInt(localStorage.getItem(KEY_BAKIDX))||0;
+function rotateBak(){
+  try{safeSet(KEY_BAK[bakIdx%3],{data:S,hist:getHistory(),inv:INV,_meta:{time:new Date().toISOString()}});
+    bakIdx=(bakIdx+1)%3;localStorage.setItem(KEY_BAKIDX,String(bakIdx));}catch(e){}
+}
+setInterval(rotateBak,BAK_INTV);
+
+/* ══════════════════════════════════════
+   §4 · STATE — ROOMS
+══════════════════════════════════════ */
+function freshItem(nm){return{nama:nm||'',diambil:0,retur:0,catatan:''};}
+function freshRoom(i){return{id:i,patient:'',startTime:'',status:'kosong',timerStart:null,items:[],nextPatient:{nama:'',catatan:'',checks:{},items:[],collapsed:false}};}
+function freshState(){return{v:VER,rooms:Array.from({length:ROOMS},(_,i)=>freshRoom(i)),presets:JSON.parse(JSON.stringify(DEFAULT_PRESETS)),templates:[],meta:{lastSave:'',saveCount:0}};}
+function migrateRoom(r,i){
+  if(!r||typeof r!=='object')return freshRoom(i);
+  r.id=i;r.patient=typeof r.patient==='string'?r.patient:'';r.startTime=typeof r.startTime==='string'?r.startTime:'';
+  r.status=r.status||'kosong';r.timerStart=r.timerStart||null;
+  if(!Array.isArray(r.items))r.items=[];
+  r.items=r.items.map(it=>({nama:typeof it.nama==='string'?it.nama:'',diambil:Math.max(0,parseInt(it.diambil)||0),retur:Math.max(0,parseInt(it.retur)||0),catatan:typeof it.catatan==='string'?it.catatan:''}));
+  if(!r.nextPatient||typeof r.nextPatient!=='object')r.nextPatient={nama:'',catatan:'',checks:{},items:[],collapsed:false};
+  else{r.nextPatient.nama=r.nextPatient.nama||'';r.nextPatient.catatan=r.nextPatient.catatan||'';if(!r.nextPatient.checks)r.nextPatient.checks={};if(!Array.isArray(r.nextPatient.items))r.nextPatient.items=[];if(r.nextPatient.collapsed===undefined)r.nextPatient.collapsed=false;}
+  if(Array.isArray(r.history)&&r.history.length){const H=getHistory();r.history.forEach(h=>{if(h&&h.id&&!H.entries.find(x=>x.id===h.id))H.entries.push(h);});saveHistory(H);delete r.history;}
+  return r;
+}
+function tryLoadState(){
+  const raw=localStorage.getItem(KEY_DATA);
+  if(raw){const d=safeParse(raw,null);if(d&&Array.isArray(d.rooms))return d;}
+  for(let i=0;i<3;i++){const bk=safeParse(localStorage.getItem(KEY_BAK[i]),null);if(bk&&bk.data&&Array.isArray(bk.data.rooms)){showToast('⚠ Data dipulihkan dari backup',true);return bk.data;}}
+  return freshState();
+}
+let S=(()=>{
+  const raw=tryLoadState();
+  while((raw.rooms||[]).length<ROOMS)raw.rooms.push({id:raw.rooms.length});
+  raw.rooms=raw.rooms.slice(0,ROOMS).map((r,i)=>migrateRoom(r,i));
+  if(!Array.isArray(raw.presets)||!raw.presets.length)raw.presets=JSON.parse(JSON.stringify(DEFAULT_PRESETS));
+  if(!Array.isArray(raw.templates))raw.templates=[];
+  if(!raw.meta)raw.meta={lastSave:'',saveCount:0};
+  raw.v=VER;return raw;
+})();
+
+/* ══════════════════════════════════════
+   §5 · STATE — INVENTORY GLOBAL
+══════════════════════════════════════ */
+const DEFAULT_INV=[
+  {id:'inv1',nama:'Sarung Tangan Steril',kat:'alkes',stok:50,satuan:'pasang',min:10,ket:'Ukuran M & L'},
+  {id:'inv2',nama:'Masker Bedah 3-ply',kat:'bahan',stok:120,satuan:'pcs',min:20,ket:''},
+  {id:'inv3',nama:'Propofol 200mg',kat:'obat',stok:8,satuan:'ampul',min:10,ket:'Induksi anestesi'},
+  {id:'inv4',nama:'Lidokain 2%',kat:'obat',stok:15,satuan:'vial',min:5,ket:'Anestesi lokal'},
+  {id:'inv5',nama:'Benang Chromic 3-0',kat:'alkes',stok:30,satuan:'pack',min:8,ket:'Absorbable'},
+  {id:'inv6',nama:'Kasa Steril 10x10',kat:'bahan',stok:0,satuan:'pack',min:15,ket:'Perlu restock'},
+  {id:'inv7',nama:'Spuit 5cc',kat:'alkes',stok:200,satuan:'pcs',min:30,ket:''},
+  {id:'inv8',nama:'Fentanyl 0.05mg',kat:'obat',stok:5,satuan:'ampul',min:6,ket:'Narkotika — kunci'},
+];
+let INV=(()=>{
+  const raw=safeParse(localStorage.getItem(KEY_INV),null);
+  if(Array.isArray(raw)&&raw.length)return raw;
+  return JSON.parse(JSON.stringify(DEFAULT_INV));
+})();
+let invFilter='semua', invSearch='', invEditId=null;
+
+/* ══════════════════════════════════════
+   §6 · AUTO-SAVE
+══════════════════════════════════════ */
+let _saveT=null;
+function scheduleSave(){clearTimeout(_saveT);_saveT=setTimeout(doSave,SAVE_DELAY);}
+function doSave(){
+  S.meta.lastSave=new Date().toISOString();S.meta.saveCount=(S.meta.saveCount||0)+1;
+  safeSet(KEY_DATA,S);safeSet(KEY_INV,INV);
+  const el=document.getElementById('saveStat');
+  if(el)el.textContent='Tersimpan '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function doSaveNow(){clearTimeout(_saveT);doSave();}
+
+/* ══════════════════════════════════════
+   §7 · UNDO / REDO
+══════════════════════════════════════ */
+const undoStk={},redoStk={};
+function pushUndo(ri){
+  if(!undoStk[ri])undoStk[ri]=[];if(!redoStk[ri])redoStk[ri]=[];
+  undoStk[ri].push(JSON.parse(JSON.stringify(S.rooms[ri].items)));
+  if(undoStk[ri].length>MAX_UNDO)undoStk[ri].shift();redoStk[ri]=[];updUndoBtns(ri);
+}
+function undoRoom(ri){
+  if(!undoStk[ri]?.length)return;
+  if(!redoStk[ri])redoStk[ri]=[];
+  redoStk[ri].push(JSON.parse(JSON.stringify(S.rooms[ri].items)));
+  S.rooms[ri].items=undoStk[ri].pop();scheduleSave();
+  renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);updUndoBtns(ri);showToast('↩ Dibatalkan');
+}
+function redoRoom(ri){
+  if(!redoStk[ri]?.length)return;
+  if(!undoStk[ri])undoStk[ri]=[];
+  undoStk[ri].push(JSON.parse(JSON.stringify(S.rooms[ri].items)));
+  S.rooms[ri].items=redoStk[ri].pop();scheduleSave();
+  renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);updUndoBtns(ri);showToast('↪ Diulangi');
+}
+function updUndoBtns(ri){
+  const u=document.getElementById('undo'+ri),r2=document.getElementById('redo'+ri);
+  if(u)u.disabled=!undoStk[ri]?.length;if(r2)r2.disabled=!redoStk[ri]?.length;
+}
+document.addEventListener('keydown',e=>{
+  if(activeTab>=ROOMS)return;
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();commitEdit();undoRoom(activeTab);}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();commitEdit();redoRoom(activeTab);}
+});
+
+/* ══════════════════════════════════════
+   §8 · CLOCK + TOAST + UTILS
+══════════════════════════════════════ */
+function tick(){
+  const n=new Date();
+  const el=document.getElementById('clock');
+  if(el)el.textContent=n.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(tick,1000);tick();
+
+function showToast(msg,isErr,isWarn){
+  const c=document.getElementById('toastC');
+  const t=document.createElement('div');
+  t.className='toast'+(isErr?' err':isWarn?' warn':'');
+  t.textContent=msg;c.appendChild(t);
+  const dur=isErr?3600:2400;
+  setTimeout(()=>{t.style.animation='tOut .25s ease forwards';setTimeout(()=>t.remove(),260);},dur);
+}
+function OM(id){document.getElementById(id)?.classList.add('on');}
+function CM(id){document.getElementById(id)?.classList.remove('on');}
+document.querySelectorAll('.ov').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)CM(el.id);}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.ov.on').forEach(el=>CM(el.id));});
+function nowStr(){return new Date().toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function todayStr(){return new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function encode(obj){return btoa(encodeURIComponent(JSON.stringify(obj)));}
+function decode(str){return JSON.parse(decodeURIComponent(atob(str)));}
+
+/* ══════════════════════════════════════
+   §9 · TIMER
+══════════════════════════════════════ */
+function fmtElapsed(ms){
+  const s=Math.max(0,Math.floor(ms/1000));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;
+  return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
+}
+setInterval(()=>{
+  for(let i=0;i<ROOMS;i++){
+    const el=document.getElementById('timer'+i);if(!el)continue;
+    const r=S.rooms[i];
+    if(r.timerStart){el.textContent=fmtElapsed(Date.now()-new Date(r.timerStart));el.className='timer-disp run';}
+  }
+},1000);
+
+function toggleTimer(ri){
+  const r=S.rooms[ri];
+  if(r.timerStart){
+    if(!confirm('Stop timer Kamar '+(ri+1)+'?'))return;
+    r.timerStart=null;
+    const el=document.getElementById('timer'+ri);if(el){el.textContent='00:00:00';el.className='timer-disp';}
+    const btn=document.getElementById('tbtn'+ri);if(btn){btn.textContent='▶ Mulai Timer';btn.className='btn bg';}
+  }else{
+    r.timerStart=new Date().toISOString();
+    const btn=document.getElementById('tbtn'+ri);if(btn){btn.textContent='⏹ Stop';btn.className='btn bor';}
+  }
+  scheduleSave();
+}
+
+/* ══════════════════════════════════════
+   §10 · BUILD ALL UI
+══════════════════════════════════════ */
+let activeTab=0, rhDate=todayStr(), histFilter='all';
+
+function buildAll(){
+  buildTabs();
+  const m=document.getElementById('main');m.innerHTML='';
+  for(let i=0;i<ROOMS;i++)m.appendChild(mkRoom(i));
+  m.appendChild(mkHistPanel());
+  m.appendChild(mkHarianPanel());
+  m.appendChild(mkStatistikPanel());
+  m.appendChild(mkInvPanel());
+  m.appendChild(mkToolsPanel());
+  applyTab();
+}
+
+function buildTabs(){
+  const el=document.getElementById('tabs');el.innerHTML='';
+  for(let i=0;i<ROOMS;i++){
+    const r=S.rooms[i];
+    const sCls='s-'+(r.status||'kosong');
+    el.appendChild(mkTab(`OK ${i+1}`,i,sCls,r.patient));
+  }
+  const H=getHistory();
+  el.appendChild(mkTab('📋 Riwayat'+(H.entries.length?' ('+H.entries.length+')':''),6,'',''));
+  el.appendChild(mkTab('📅 Harian',7,'',''));
+  el.appendChild(mkTab('📊 Statistik',8,'',''));
+  el.appendChild(mkTab('📦 Inventaris',10,'',''));
+  el.appendChild(mkTab('🔧 Tools',9,'',''));
+}
+function mkTab(label,idx,cls,title){
+  const b=document.createElement('button');b.className=`tab ${cls}`.trim();b.dataset.i=idx;b.title=title||'';
+  b.innerHTML=`<span class="tdot"></span>${label}`;b.onclick=()=>switchTab(+b.dataset.i);return b;
+}
+function applyTab(){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',+t.dataset.i===activeTab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',+p.dataset.i===activeTab));
+}
+function switchTab(i){
+  commitEdit();activeTab=i;applyTab();
+  if(i===8)rebuildStatistik();if(i===9)refreshToolsPanel();if(i===10)renderInvTable();
+}
+function refreshDot(ri){
+  const t=document.querySelector(`.tab[data-i="${ri}"]`);if(!t)return;
+  const r=S.rooms[ri];t.className=`tab s-${r.status||'kosong'}${ri===activeTab?' on':''}`.trim();t.title=r.patient||'';
+}
+function refreshHistTab(){
+  const t=document.querySelector('.tab[data-i="6"]');if(!t)return;
+  const H=getHistory();t.innerHTML=`<span class="tdot"></span>📋 Riwayat${H.entries.length?' ('+H.entries.length+')':''}`;
+  t.className=`tab${activeTab===6?' on':''}`.trim();
+}
+
+/* ══════════════════════════════════════
+   §11 · ROOM PANEL
+══════════════════════════════════════ */
+function mkRoom(ri){
+  const r=S.rooms[ri];const d=document.createElement('div');d.className='panel';d.dataset.i=ri;
+  const timerRunning=!!r.timerStart;const timerTxt=timerRunning?fmtElapsed(Date.now()-new Date(r.timerStart)):'00:00:00';
+  d.innerHTML=`
+    <div class="pcard">
+      <div class="pc-field">
+        <div class="pc-label">Pasien</div>
+        <input class="pi pi-n" type="text" placeholder="Nama pasien..." value="${esc(r.patient)}" oninput="upP(${ri},this.value)" />
+      </div>
+      <div class="pc-field">
+        <div class="pc-label">Mulai Operasi</div>
+        <input class="pi pi-t" type="time" value="${r.startTime}" oninput="upT(${ri},this.value)" />
+      </div>
+      <div class="pc-field">
+        <div class="pc-label">Status Kamar</div>
+        <select class="stat-sel" onchange="setStatus(${ri},this.value)">
+          ${Object.entries(STATUS_MAP).map(([k,v])=>`<option value="${k}"${r.status===k?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div class="pc-field timer-row pc-full" style="flex-direction:row;align-items:center;gap:8px">
+        <div class="timer-disp${timerRunning?' run':''}" id="timer${ri}">${timerTxt}</div>
+        <button class="btn ${timerRunning?'bor':'bg'}" id="tbtn${ri}" onclick="toggleTimer(${ri})" style="flex-shrink:0">
+          ${timerRunning?'⏹ Stop':'▶ Mulai Timer'}
+        </button>
+      </div>
+      <div class="room-badge">Kamar ${ri+1}</div>
+    </div>
+    <div class="room-stats" id="stats${ri}"></div>
+    <div class="twrap">
+      <div class="tbar">
+        <input class="srch" id="srch${ri}" placeholder="🔍 Cari barang..." oninput="dSrch(${ri},this.value)" />
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn bg" id="undo${ri}" onclick="commitEdit();undoRoom(${ri})" disabled title="Ctrl+Z" style="padding:0;width:38px;height:38px;justify-content:center;font-size:16px">↩</button>
+          <button class="btn bg" id="redo${ri}" onclick="commitEdit();redoRoom(${ri})" disabled title="Ctrl+Y" style="padding:0;width:38px;height:38px;justify-content:center;font-size:16px">↪</button>
+          <button class="btn bg" onclick="openPreset(${ri})" style="height:38px">📦 Preset</button>
+          <button class="btn bbl" onclick="openRC(${ri})" style="height:38px">↩ Retur</button>
+          <button class="btn bor" onclick="openSelesai(${ri})" style="height:38px">🏁 Selesai</button>
+          <div class="more-menu" id="mm${ri}">
+            <button class="more-btn" onclick="toggleMore(${ri})">⋯</button>
+            <div class="more-drop" id="md${ri}">
+              <button class="mdrop-item" onclick="openTpl(${ri});closeMore(${ri})"><span class="mi-icon">📑</span>Template</button>
+              <button class="mdrop-item" onclick="openBE(${ri});closeMore(${ri})"><span class="mi-icon">✏️</span>Bulk Edit</button>
+              <button class="mdrop-item" onclick="mergeDup(${ri});closeMore(${ri})"><span class="mi-icon">🔀</span>Gabung Duplikat</button>
+              <div class="mdrop-sep"></div>
+              <button class="mdrop-item danger" onclick="resetRoom(${ri});closeMore(${ri})"><span class="mi-icon">🗑</span>Reset Barang</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tc${ri}"></div>
+      <div class="qa-wrap" id="qaw${ri}">
+        <div class="qa-row">
+          <span class="qa-lbl">＋ Tambah:</span>
+          <input class="qa-inp" id="qa${ri}" placeholder="Ketik nama barang / obat, Enter untuk tambah..." autocomplete="off"
+            oninput="onQaInput(${ri},this.value)" onkeydown="onQaKey(event,${ri})" />
+          <button class="voice-btn" id="vbtn${ri}" onclick="startVoice(${ri})" title="Tambah dengan suara (contoh: 'alkohol 5')">🎤</button>
+          <button class="btn ba" onclick="qaSubmitBtn(${ri})">＋</button>
+        </div>
+        <div class="qa-hint">Enter = tambah · Esc = batal · Tab = pilih saran · 🎤 = suara (ucapkan "nama barang jumlah", misal: "alkohol 5")</div>
+        <div class="qa-sug" id="qas${ri}"></div>
+        <div class="qa-merge" id="qam${ri}">
+          <span id="qamTxt${ri}"></span>
+          <button class="btn bor" style="padding:4px 10px;font-size:11px" onclick="qaGabung(${ri})">Gabung</button>
+          <button class="btn bg" style="padding:4px 10px;font-size:11px" onclick="qaBaru(${ri})">Tambah Baru</button>
+          <button class="btn br" style="padding:4px 10px;font-size:11px" onclick="qaClear(${ri})">Batal</button>
+        </div>
+      </div>
+    </div>
+    <button class="sisa-toggle" id="st${ri}" onclick="toggleSisa(${ri})">
+      <span id="stlbl${ri}">Sisa Per Barang ▾</span>
+      <span id="stsum${ri}" style="font-family:var(--M);font-size:10px"></span>
+    </button>
+    <div class="sisa-body" id="sl${ri}"></div>
+    <div class="np-card" id="npc${ri}">
+      <div class="np-header" onclick="toggleNP(${ri})">
+        <div class="np-title">🔜 <span>Persiapan Pasien Berikutnya</span><span class="np-badge" id="npbadge${ri}">0/7</span></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="np-progress" style="width:90px">
+            <div class="np-progress-bar-wrap"><div class="np-progress-bar" id="npbar${ri}" style="width:0%"></div></div>
+          </div>
+          <button class="btn-np-start" onclick="event.stopPropagation();promosiNP(${ri})" title="Jadikan operasi aktif">▶ Mulai Operasi</button>
+          <span class="np-toggle-icon" id="npicon${ri}">▾</span>
+        </div>
+      </div>
+      <div class="np-body${r.nextPatient.collapsed?' collapsed':''}" id="npbody${ri}">
+        <div class="np-transfer-banner" id="nptransfer${ri}"></div>
+        <div class="np-fields">
+          <div class="np-field">
+            <div class="np-label">Nama Pasien Berikutnya</div>
+            <input class="np-inp np-inp-wide" type="text" placeholder="Nama pasien selanjutnya..." value="${esc(r.nextPatient.nama)}" oninput="upNP(${ri},'nama',this.value)" />
+          </div>
+        </div>
+        <div class="np-checklist-title">✅ Checklist Persiapan</div>
+        <div class="np-checks" id="npchecks${ri}"></div>
+        <div class="np-items-title">
+          <span>📦 Barang / Obat Persiapan</span>
+          <button class="btn bg" style="font-size:10px;padding:3px 9px;height:auto" onclick="npAddItemPrompt(${ri})">＋ Tambah</button>
+        </div>
+        <div id="npitems${ri}"></div>
+        <div class="np-notes-wrap">
+          <div class="np-label" style="margin-bottom:5px">Catatan Persiapan</div>
+          <textarea class="np-notes" rows="2" placeholder="Catatan khusus, alergi, permintaan dokter..." oninput="upNP(${ri},'catatan',this.value)">${esc(r.nextPatient.catatan)}</textarea>
+        </div>
+        <button class="np-clear-btn" onclick="clearNP(${ri})">🗑 Kosongkan Persiapan</button>
+      </div>
+    </div>`;
+  renderTable(ri,d);renderRoomStats(ri,d);renderSisaList(ri,d);renderNPChecks(ri,d);renderNPItems(ri,d);return d;
+}
+
+function upP(ri,v){S.rooms[ri].patient=v;scheduleSave();refreshDot(ri);}
+function upT(ri,v){S.rooms[ri].startTime=v;scheduleSave();}
+function setStatus(ri,val){S.rooms[ri].status=val;scheduleSave();refreshDot(ri);}
+function resetRoom(ri){
+  if(!confirm('Reset semua barang di Kamar '+(ri+1)+'?'))return;
+  pushUndo(ri);S.rooms[ri].items=[];scheduleSave();
+  renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);showToast('✅ Kamar '+(ri+1)+' direset');
+}
+
+/* ══════════════════════════════════════
+   §11b · NEXT PATIENT PREP
+══════════════════════════════════════ */
+const NP_CHECKS=[
+  {id:'consent',lbl:'Informed Consent'},
+  {id:'puasa',lbl:'Puasa Terkonfirmasi'},
+  {id:'lab',lbl:'Lab / Penunjang'},
+  {id:'alergi',lbl:'Cek Alergi'},
+  {id:'iv',lbl:'IV Line Terpasang'},
+  {id:'posisi',lbl:'Posisi Operasi'},
+  {id:'alkes',lbl:'Alkes Siap'},
+];
+function renderNPChecks(ri,ctx){
+  const r=S.rooms[ri];const np=r.nextPatient;
+  const root=ctx||document;const el=root.querySelector(`#npchecks${ri}`)||document.getElementById(`npchecks${ri}`);if(!el)return;
+  const done=NP_CHECKS.filter(c=>np.checks[c.id]).length;
+  el.innerHTML=NP_CHECKS.map(c=>{
+    const on=!!np.checks[c.id];
+    return`<div class="np-check-item${on?' checked':''}" onclick="toggleNPCheck(${ri},'${c.id}')"><div class="np-check-box">${on?'✓':''}</div><span class="np-check-lbl">${c.lbl}</span></div>`;
+  }).join('');
+  const pct=Math.round(done/NP_CHECKS.length*100);
+  const badge=root.querySelector(`#npbadge${ri}`)||document.getElementById(`npbadge${ri}`);
+  const bar=root.querySelector(`#npbar${ri}`)||document.getElementById(`npbar${ri}`);
+  if(badge)badge.textContent=`${done}/${NP_CHECKS.length}`;
+  if(bar)bar.style.width=pct+'%';
+}
+function renderNPItems(ri,ctx){
+  const np=S.rooms[ri].nextPatient;
+  const el=(ctx||document).querySelector(`#npitems${ri}`)||document.getElementById(`npitems${ri}`);if(!el)return;
+  const items=np.items||[];
+  const listHTML=items.length
+    ? items.map((it,k)=>`
+        <div class="np-item-row">
+          <span class="np-item-nm">${esc(it.nama)}</span>
+          <span class="np-item-qty">×${it.qty}</span>
+          <span class="np-item-src">${it.src==='transfer'?'🔄':'✏️'}</span>
+          <button class="np-item-del" onclick="npDelItem(${ri},${k})">×</button>
+        </div>`).join('')
+    : `<div style="padding:8px 12px;font-size:11px;color:var(--txt3)">Belum ada barang. Tambah di bawah atau transfer dari sisa operasi.</div>`;
+  el.innerHTML=`<div class="np-items-list">
+    ${listHTML}
+    <div class="np-add-row">
+      <input class="np-add-inp" id="npainp${ri}" placeholder="Nama barang / obat..." autocomplete="off"
+        onkeydown="npAddKey(event,${ri})" />
+      <input class="np-add-qty" id="npaqty${ri}" type="number" min="1" value="1"
+        onkeydown="npAddKey(event,${ri})" />
+      <button class="btn ba" style="padding:5px 10px;font-size:12px;flex-shrink:0" onclick="npAddItem(${ri})">＋</button>
+    </div>
+  </div>`;
+}
+function npAddItemPrompt(ri){
+  // just focus the always-visible input
+  const inp=document.getElementById('npainp'+ri);
+  if(inp){inp.focus();}
+  // make sure NP body is expanded
+  const np=S.rooms[ri].nextPatient;
+  if(np.collapsed){np.collapsed=false;scheduleSave();
+    const body=document.getElementById('npbody'+ri);if(body)body.classList.remove('collapsed');
+    const icon=document.getElementById('npicon'+ri);if(icon)icon.style.transform='';
+    // after expand, focus input
+    setTimeout(()=>document.getElementById('npainp'+ri)?.focus(),60);
+  }
+}
+function npAddKey(e,ri){
+  if(e.key==='Enter'){e.preventDefault();npAddItem(ri);}
+  if(e.key==='Escape'){const inp=document.getElementById('npainp'+ri);if(inp)inp.value='';}
+}
+function npAddItem(ri){
+  const inp=document.getElementById('npainp'+ri);
+  const qtyEl=document.getElementById('npaqty'+ri);
+  const nama=(inp?.value||'').trim();
+  const qty=Math.max(1,parseInt(qtyEl?.value)||1);
+  if(!nama){inp?.focus();return;}
+  const np=S.rooms[ri].nextPatient;
+  if(!Array.isArray(np.items))np.items=[];
+  // merge if same name
+  const ex=np.items.find(x=>x.nama.toLowerCase()===nama.toLowerCase());
+  if(ex){ex.qty+=qty;}
+  else{np.items.push({nama,qty,src:'manual'});}
+  scheduleSave();
+  // targeted DOM update: insert new item row above add-row without losing focus
+  const listWrap=document.querySelector(`#npitems${ri} .np-items-list`);
+  if(listWrap){
+    // remove placeholder if present
+    const placeholder=listWrap.querySelector('div:not(.np-item-row):not(.np-add-row)');
+    if(placeholder)placeholder.remove();
+    const addRow=listWrap.querySelector('.np-add-row');
+    if(addRow){
+      if(ex){
+        // update qty display in existing row
+        const rows=listWrap.querySelectorAll('.np-item-row');
+        const idx=np.items.indexOf(ex);
+        if(rows[idx]){const qspan=rows[idx].querySelector('.np-item-qty');if(qspan)qspan.textContent=`×${ex.qty}`;}
+      } else {
+        const k=np.items.length-1;
+        const newRow=document.createElement('div');
+        newRow.className='np-item-row';
+        newRow.innerHTML=`<span class="np-item-nm">${esc(nama)}</span><span class="np-item-qty">×${qty}</span><span class="np-item-src">✏️</span><button class="np-item-del" onclick="npDelItem(${ri},${k})">×</button>`;
+        listWrap.insertBefore(newRow,addRow);
+      }
+    }
+  } else {
+    renderNPItems(ri);
+  }
+  if(inp){inp.value='';inp.focus();}
+  if(qtyEl)qtyEl.value='1';
+}
+function npDelItem(ri,k){
+  const np=S.rooms[ri].nextPatient;
+  if(!Array.isArray(np.items))return;
+  np.items.splice(k,1);
+  scheduleSave();
+  renderNPItems(ri); // full re-render OK here since user clicked × button
+}
+function toggleNPCheck(ri,cid){
+  const np=S.rooms[ri].nextPatient;np.checks[cid]=!np.checks[cid];scheduleSave();renderNPChecks(ri);}
+function upNP(ri,field,val){S.rooms[ri].nextPatient[field]=val;scheduleSave();}
+function toggleNP(ri){
+  const np=S.rooms[ri].nextPatient;np.collapsed=!np.collapsed;scheduleSave();
+  const body=document.getElementById('npbody'+ri);const icon=document.getElementById('npicon'+ri);
+  if(body)body.classList.toggle('collapsed',np.collapsed);
+  if(icon)icon.style.transform=np.collapsed?'rotate(-90deg)':'';
+}
+function clearNP(ri){
+  if(!confirm('Kosongkan semua persiapan pasien berikutnya di Kamar '+(ri+1)+'?'))return;
+  S.rooms[ri].nextPatient={nama:'',catatan:'',checks:{},items:[],collapsed:false};scheduleSave();
+  const body=document.getElementById('npbody'+ri);if(!body)return;
+  body.querySelectorAll('.np-inp').forEach(inp=>inp.value='');
+  const notes=body.querySelector('.np-notes');if(notes)notes.value='';
+  body.classList.remove('collapsed');renderNPChecks(ri);renderNPItems(ri);
+  const banner=document.getElementById('nptransfer'+ri);if(banner){banner.classList.remove('show');banner.innerHTML='';}
+  showToast('✅ Persiapan dikosongkan');
+}
+
+function promosiNP(ri){
+  const r=S.rooms[ri];
+  const np=r.nextPatient;
+  const npItems=np.items||[];
+  const sisaItems=r.items.filter(it=>it.nama&&((it.diambil||0)-(it.retur||0))>0);
+
+  // Validasi — minimal ada nama atau barang
+  if(!np.nama&&!npItems.length&&!sisaItems.length){
+    showToast('⚠ Isi nama pasien atau barang persiapan terlebih dahulu',false,true);return;
+  }
+
+  // Jika masih ada operasi aktif (ada pasien / barang), minta konfirmasi
+  const adaAktif=r.patient||r.items.some(it=>it.nama);
+  if(adaAktif){
+    if(!confirm(`Kamar ${ri+1} masih ada data aktif.\nData operasi saat ini akan disimpan ke riwayat dulu.\nLanjutkan?`))return;
+    // Simpan dulu ke riwayat
+    const now=new Date();const selesaiTime=nowStr();
+    const durasi=r.timerStart?fmtElapsed(Date.now()-new Date(r.timerStart)):'';
+    const H=getHistory();
+    H.entries.unshift({id:Date.now(),roomId:ri,patient:r.patient||'(Tanpa nama)',startTime:r.startTime||'—',selesaiTime,durasi,items:JSON.parse(JSON.stringify(r.items.filter(it=>it.nama))),savedAt:now.toISOString()});
+    saveHistory(H);refreshHistTab();
+  }
+
+  // Gabungkan: sisa barang aktif + barang persiapan
+  // Mulai dengan sisa barang yang belum diretur (diambil=sisa, retur=0)
+  const newItems=[];
+  sisaItems.forEach(it=>{
+    newItems.push(freshItem(it.nama));
+    newItems[newItems.length-1].diambil=(it.diambil||0)-(it.retur||0);
+  });
+  // Tambah barang dari persiapan (merge jika nama sama)
+  npItems.forEach(npIt=>{
+    const ex=newItems.find(x=>x.nama.toLowerCase()===npIt.nama.toLowerCase());
+    if(ex){ex.diambil+=npIt.qty;}
+    else{const ni=freshItem(npIt.nama);ni.diambil=npIt.qty;newItems.push(ni);}
+  });
+
+  // Set room baru
+  r.patient=np.nama||r.patient||'';
+  r.startTime='';
+  r.status='persiapan';
+  r.timerStart=null;
+  r.items=newItems;
+  // Kosongkan NP
+  r.nextPatient={nama:'',catatan:'',checks:{},items:[],collapsed:false};
+
+  scheduleSave();
+  // Re-render panel
+  const old=document.querySelector(`.panel[data-i="${ri}"]`);const neo=mkRoom(ri);if(old)old.replaceWith(neo);
+  activeTab=ri;applyTab();refreshDot(ri);
+
+  const jumlah=newItems.length;
+  showToast(`✅ ${np.nama||'Pasien'} → Operasi aktif · ${jumlah} barang disiapkan`);
+  addLog('info',`Promosi NP: Kamar ${ri+1} → ${np.nama}`);
+}
+
+// Transfer sisa barang ke pasien berikutnya
+function transferSisaToNP(ri,sisaItems){
+  const np=S.rooms[ri].nextPatient;if(!Array.isArray(np.items))np.items=[];
+  sisaItems.forEach(it=>{
+    const ex=np.items.find(x=>x.nama.toLowerCase()===it.nama.toLowerCase());
+    if(ex){ex.qty+=it.sisa;ex.src='transfer';}
+    else np.items.push({nama:it.nama,qty:it.sisa,src:'transfer'});
+  });
+  scheduleSave();
+  // Show transfer banner
+  const banner=document.getElementById('nptransfer'+ri);
+  if(banner){
+    banner.innerHTML=`<div class="np-transfer-banner-title">🔄 ${sisaItems.length} item sisa ditransfer dari pasien sebelumnya</div>${sisaItems.map(it=>`<div class="np-transfer-item"><span class="np-transfer-nm">${esc(it.nama)}</span><span class="np-transfer-qty">×${it.sisa}</span></div>`).join('')}`;
+    banner.classList.add('show');
+  }
+  renderNPItems(ri);
+  // Open NP section if collapsed
+  const np2=S.rooms[ri].nextPatient;if(np2.collapsed){np2.collapsed=false;scheduleSave();const body=document.getElementById('npbody'+ri);if(body)body.classList.remove('collapsed');const icon=document.getElementById('npicon'+ri);if(icon)icon.style.transform='';}
+}
+
+/* ══════════════════════════════════════
+   §11c · RETUR CEPAT
+══════════════════════════════════════ */
+let _rcRoom=-1,_rcData=[];
+function openRC(ri){
+  commitEdit();const r=S.rooms[ri];
+  const items=r.items.filter(it=>it.nama&&(it.diambil||0)>0);
+  if(!items.length){showToast('Tidak ada barang dengan jumlah diambil > 0',false,true);return;}
+  _rcRoom=ri;
+  _rcData=items.map((it,k)=>({j:r.items.indexOf(it),nama:it.nama,diambil:it.diambil||0,retur:it.retur||0}));
+  renderRC();OM('ovRC');
+  setTimeout(()=>{const first=document.querySelector('.retur-inp');if(first){first.focus();first.select();}},120);
+}
+function renderRC(){
+  const ri=_rcRoom;const r=S.rooms[ri];
+  const done=_rcData.filter(x=>x.retur>0).length;const total=_rcData.length;
+  const bar=document.getElementById('rcProgBar');const txt=document.getElementById('rcProgTxt');
+  if(bar)bar.style.width=Math.round(done/total*100)+'%';
+  if(txt)txt.textContent=`${done} / ${total} item`;
+  document.getElementById('rcBody').innerHTML=_rcData.map((it,k)=>{
+    const sisa=it.diambil-it.retur;const sc=sisa>0?'sp':sisa===0?'sz':'sn';const isDone=it.retur>0;
+    return`<div class="retur-item${isDone?' done':''}" id="rcrow${k}">
+      <span class="retur-check">${isDone?'✓':''}</span>
+      <span class="retur-nm">${esc(it.nama)}</span>
+      <span class="retur-diambil">Ambil: ${it.diambil}</span>
+      <div class="retur-inp-wrap">
+        <input class="retur-inp" id="rcInp${k}" type="number" min="0" max="${it.diambil}" value="${it.retur||''}" placeholder="0"
+          oninput="rcUpdate(${k},this.value)"
+          onkeydown="rcKey(event,${k})"
+          onfocus="rcFocus(${k})" />
+      </div>
+      <span class="retur-sisa sc ${sc}">${sisa}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('rcFoot').innerHTML=`
+    <button class="btn bg" onclick="CM('ovRC')">Batal</button>
+    <button class="btn ba" onclick="rcKonfirmasi()">✅ Simpan Semua Retur</button>`;
+}
+function rcFocus(k){
+  // highlight active row
+  document.querySelectorAll('.retur-item').forEach((el,i)=>{el.classList.toggle('active',i===k);});
+  document.querySelectorAll('.retur-inp').forEach((el,i)=>el.classList.toggle('active-inp',i===k));
+}
+function rcUpdate(k,val){
+  // allow empty field while typing — only clamp on actual numbers
+  if(val===''||val===null){_rcData[k].retur=0;}
+  else{_rcData[k].retur=Math.max(0,Math.min(_rcData[k].diambil,parseInt(val)||0));}
+  const v=_rcData[k].retur;
+  const row=document.getElementById('rcrow'+k);if(!row)return;
+  const sisa=_rcData[k].diambil-v;const sc=sisa>0?'sp':sisa===0?'sz':'sn';
+  const sisaEl=row.querySelector('.retur-sisa');if(sisaEl){sisaEl.textContent=sisa;sisaEl.className=`retur-sisa sc ${sc}`;}
+  const chk=row.querySelector('.retur-check');if(chk)chk.textContent=v>0?'✓':'';
+  row.classList.toggle('done',v>0);
+  const done=_rcData.filter(x=>x.retur>0).length;const total=_rcData.length;
+  const bar=document.getElementById('rcProgBar');const txt=document.getElementById('rcProgTxt');
+  if(bar)bar.style.width=Math.round(done/total*100)+'%';
+  if(txt)txt.textContent=`${done} / ${total} item`;
+}
+function rcKey(e,k){
+  const inp=document.getElementById('rcInp'+k);
+  if(e.key==='r'||e.key==='R'){
+    // R = retur semua
+    if(inp){inp.value=_rcData[k].diambil;rcUpdate(k,_rcData[k].diambil);}
+    e.preventDefault();
+  }
+  if(e.key==='Enter'||e.key==='Tab'){
+    e.preventDefault();
+    // commit current value
+    const v=Math.max(0,Math.min(_rcData[k].diambil,parseInt(inp?.value)||0));
+    _rcData[k].retur=v;
+    // go to next
+    const next=e.shiftKey?k-1:k+1;
+    if(next>=0&&next<_rcData.length){
+      const ni=document.getElementById('rcInp'+next);if(ni){ni.focus();ni.select();rcFocus(next);}
+    } else if(!e.shiftKey){
+      // last item — focus simpan button
+      document.querySelector('#rcFoot .btn.ba')?.focus();
+    }
+  }
+  if(e.key==='Escape'){CM('ovRC');}
+}
+function rcSemuaRetur(){
+  _rcData.forEach((it,k)=>{it.retur=it.diambil;const inp=document.getElementById('rcInp'+k);if(inp)inp.value=it.diambil;rcUpdate(k,it.diambil);});
+}
+function rcSemuaNol(){
+  _rcData.forEach((it,k)=>{it.retur=0;const inp=document.getElementById('rcInp'+k);if(inp)inp.value='';rcUpdate(k,0);});
+}
+function rcKonfirmasi(){
+  const ri=_rcRoom;
+  // Apply retur values back to state
+  _rcData.forEach(d=>{S.rooms[ri].items[d.j].retur=d.retur;});
+  scheduleSave();renderTable(ri);renderRoomStats(ri);renderSisaList(ri);
+  CM('ovRC');showToast('✅ Retur disimpan');
+}
+
+/* ══════════════════════════════════════
+   §12 · TABLE + INLINE EDIT
+══════════════════════════════════════ */
+let editingCell=null,srchQ={},_srchT={};
+function dSrch(ri,q){clearTimeout(_srchT[ri]);_srchT[ri]=setTimeout(()=>{srchQ[ri]=q;renderTable(ri);},SRCH_DELAY);}
+function renderTable(ri,ctx){
+  const r=S.rooms[ri];const root=ctx||document;
+  const tc=root.querySelector?root.querySelector(`#tc${ri}`):document.getElementById(`tc${ri}`);if(!tc)return;
+  const q=(srchQ[ri]||'').toLowerCase();let vis=r.items.map((it,j)=>({...it,j}));
+  if(q)vis=vis.filter(x=>x.nama.toLowerCase().includes(q)||(x.catatan||'').toLowerCase().includes(q));
+  if(!r.items.length){tc.innerHTML=`<div style="padding:20px;text-align:center;color:var(--txt3);font-size:12px">— Ketik di bawah untuk menambah barang —</div>`;return;}
+  if(!vis.length){tc.innerHTML=`<div style="padding:20px;text-align:center;color:var(--txt3);font-size:12px">— Tidak ada hasil untuk "${esc(srchQ[ri])}" —</div>`;return;}
+  const rows=vis.map((it,k)=>{
+    const base=rowHTML(ri,it.j,k+1,r.items[it.j]);
+    const ct=r.items[it.j].catatan||'';
+    const cRow=`<tr class="crow" id="crow_${ri}_${it.j}" style="display:none"><td colspan="6" style="padding:4px 12px 10px 36px"><textarea class="nota-area" rows="2" placeholder="Catatan..." oninput="upCatatan(${ri},${it.j},this.value)">${esc(ct)}</textarea></td></tr>`;
+    return base+cRow;
+  }).join('');
+  tc.innerHTML=`<table><thead><tr><th style="width:28px;text-align:center">#</th><th>Nama Barang / Obat</th><th style="text-align:right;width:84px">Diambil</th><th style="text-align:right;width:78px">Retur</th><th style="text-align:right;width:60px">Sisa</th><th style="width:70px;text-align:center">Aksi</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function rowHTML(ri,j,num,it){
+  const sisa=(it.diambil||0)-(it.retur||0);const sc=sisa>0?'sp':sisa===0?'sz':'sn';const hasNote=!!(it.catatan);const warn=(it.retur||0)>(it.diambil||0);
+  if(editingCell?.ri===ri&&editingCell?.j===j){
+    return`<tr class="erow" data-ri="${ri}" data-j="${j}"><td class="td-no">${num}</td>
+      <td><input class="ei" id="ei_nm" value="${esc(it.nama)}" placeholder="Nama barang..." onkeydown="eiKey(event,${ri},${j})" /></td>
+      <td><input class="ei en" id="ei_am" type="number" min="0" value="${it.diambil||''}" placeholder="0" onkeydown="eiKey(event,${ri},${j})" oninput="liveCalc()" /></td>
+      <td><input class="ei en" id="ei_re" type="number" min="0" value="${it.retur||''}" placeholder="0" onkeydown="eiKey(event,${ri},${j})" oninput="liveCalc()" /></td>
+      <td style="text-align:right"><span class="sc ${sc}" id="eiSisa">${sisa}</span></td>
+      <td><div class="act-cell">
+        <button class="ic-btn note-${hasNote?'on':''}" onclick="toggleNote(${ri},${j})">📝</button>
+        <button class="ic-btn dup" onclick="dupRow(event,${ri},${j})">⧉</button>
+        <button class="ic-btn dn" onclick="delI(event,${ri},${j})">×</button>
+      </div></td></tr>`;
+  }
+  return`<tr class="drow${warn?' warn-row':''}" data-ri="${ri}" data-j="${j}" onclick="editRow(${ri},${j})">
+    <td class="td-no">${num}</td>
+    <td style="font-size:13px;color:${it.nama?'var(--txt)':'var(--txt3)'};font-style:${it.nama?'normal':'italic'}">${it.nama?esc(it.nama):'(klik untuk isi)'}</td>
+    <td style="font-family:var(--M);font-size:13px;text-align:right">${it.diambil||0}</td>
+    <td style="font-family:var(--M);font-size:13px;text-align:right;color:${warn?'var(--or)':'inherit'}">${it.retur||0}</td>
+    <td style="text-align:right"><span class="sc ${sc}">${sisa}</span></td>
+    <td onclick="event.stopPropagation()"><div class="act-cell">
+      <button class="ic-btn${hasNote?' note-on':''}" onclick="toggleNote(${ri},${j})">📝</button>
+      <button class="ic-btn dup" onclick="dupRow(event,${ri},${j})">⧉</button>
+      <button class="ic-btn dn" onclick="delI(event,${ri},${j})">×</button>
+    </div></td></tr>`;
+}
+function liveCalc(){const am=parseInt(document.getElementById('ei_am')?.value)||0;const re=parseInt(document.getElementById('ei_re')?.value)||0;const s=document.getElementById('eiSisa');if(!s)return;const sisa=am-re;s.textContent=sisa;s.className='sc '+(sisa>0?'sp':sisa===0?'sz':'sn');}
+function editRow(ri,j){
+  if(editingCell){const was=editingCell;commitEdit();if(was.ri===ri&&was.j===j)return;}
+  editingCell={ri,j};const q=(srchQ[ri]||'').toLowerCase();
+  const vis=S.rooms[ri].items.map((it,idx)=>({...it,j:idx})).filter(x=>!q||x.nama.toLowerCase().includes(q));
+  const num=vis.findIndex(x=>x.j===j)+1;const tr=document.querySelector(`#tc${ri} tr[data-j="${j}"]`);
+  if(tr)tr.outerHTML=rowHTML(ri,j,num||j+1,S.rooms[ri].items[j]);else renderTable(ri);
+  setTimeout(()=>{const nm=document.getElementById('ei_nm'),am=document.getElementById('ei_am');if(nm&&!nm.value)nm.focus();else if(am)am.focus();},30);
+}
+function commitEdit(){
+  if(!editingCell)return;const{ri,j}=editingCell;
+  const nm=document.getElementById('ei_nm'),am=document.getElementById('ei_am'),re=document.getElementById('ei_re');
+  if(!nm&&!am&&!re){editingCell=null;return;}
+  const nama=(nm?.value||'').trim(),diambil=Math.max(0,parseInt(am?.value)||0),retur=Math.max(0,parseInt(re?.value)||0);
+  if(retur>diambil&&nama)addLog('warn',`Retur>${diambil} untuk "${nama}" Kamar ${ri+1}`);
+  const prev=S.rooms[ri].items[j];
+  if(prev.nama!==nama||prev.diambil!==diambil||prev.retur!==retur){
+    if(!undoStk[ri])undoStk[ri]=[];undoStk[ri].push(JSON.parse(JSON.stringify(S.rooms[ri].items)));
+    if(undoStk[ri].length>MAX_UNDO)undoStk[ri].shift();redoStk[ri]=[];
+  }
+  S.rooms[ri].items[j]={...S.rooms[ri].items[j],nama,diambil,retur};editingCell=null;scheduleSave();
+  const q=(srchQ[ri]||'').toLowerCase();const vis=S.rooms[ri].items.map((it,idx)=>({...it,j:idx})).filter(x=>!q||x.nama.toLowerCase().includes(q));
+  const num=vis.findIndex(x=>x.j===j)+1;const tr=document.querySelector(`#tc${ri} tr[data-j="${j}"]`);
+  if(tr)tr.outerHTML=rowHTML(ri,j,num||j+1,S.rooms[ri].items[j]);
+  renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);updUndoBtns(ri);
+}
+function eiKey(e,ri,j){
+  if(e.key==='Escape'){cancelEdit(ri,j);return;}
+  if(e.key==='Enter'||(e.key==='Tab'&&!e.shiftKey)){e.preventDefault();commitEdit();if(j+1<S.rooms[ri].items.length)editRow(ri,j+1);else document.getElementById('qa'+ri)?.focus();}
+  if(e.key==='Tab'&&e.shiftKey){e.preventDefault();commitEdit();if(j>0)editRow(ri,j-1);}
+}
+function cancelEdit(ri,j){
+  editingCell=null;const q=(srchQ[ri]||'').toLowerCase();
+  const vis=S.rooms[ri].items.map((it,idx)=>({...it,j:idx})).filter(x=>!q||x.nama.toLowerCase().includes(q));
+  const num=vis.findIndex(x=>x.j===j)+1;const tr=document.querySelector(`#tc${ri} tr[data-j="${j}"]`);
+  if(tr)tr.outerHTML=rowHTML(ri,j,num||j+1,S.rooms[ri].items[j]);
+}
+document.addEventListener('click',e=>{
+  if(!editingCell)return;
+  const{ri}=editingCell;
+  const tc=document.getElementById('tc'+ri);
+  const npc=document.getElementById('npc'+ri);
+  if(tc&&tc.contains(e.target))return;
+  if(npc&&npc.contains(e.target))return;
+  commitEdit();
+},true);
+function toggleNote(ri,j){const cr=document.getElementById(`crow_${ri}_${j}`);if(!cr)return;const hidden=cr.style.display==='none';cr.style.display=hidden?'':'none';if(hidden){const ta=cr.querySelector('textarea');if(ta)ta.focus();}}
+function upCatatan(ri,j,v){S.rooms[ri].items[j].catatan=v;scheduleSave();const btn=document.querySelector(`#tc${ri} tr[data-j="${j}"] .ic-btn`);if(btn)btn.className='ic-btn'+(v?' note-on':'');}
+function dupRow(e,ri,j){e.stopPropagation();commitEdit();pushUndo(ri);const it={...S.rooms[ri].items[j]};S.rooms[ri].items.splice(j+1,0,it);scheduleSave();renderTable(ri);renderRoomStats(ri);}
+function delI(e,ri,j){e.stopPropagation();commitEdit();pushUndo(ri);S.rooms[ri].items.splice(j,1);scheduleSave();renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);}
+
+/* ══════════════════════════════════════
+   §13 · QUICK ADD (with INV suggestions)
+══════════════════════════════════════ */
+let _qaTimer={},_qaPending={};
+function onQaInput(ri,val){clearTimeout(_qaTimer[ri]);_qaTimer[ri]=setTimeout(()=>showQaSug(ri,val),120);if(_qaPending[ri]&&val.toLowerCase()!==_qaPending[ri].toLowerCase())hideQaMerge(ri);}
+function showQaSug(ri,val){
+  const sug=document.getElementById('qas'+ri);if(!sug)return;const q=val.toLowerCase().trim();
+  if(!q){sug.style.display='none';return;}
+  const existing=S.rooms[ri].items.filter(it=>it.nama&&it.nama.toLowerCase().includes(q)).slice(0,4)
+    .map(it=>`<div class="qa-item" onclick="qaPickExist(${ri},'${esc(it.nama).replace(/'/g,"\\'")}')"><span>${esc(it.nama)}</span><span class="qa-tag ex">Ada di kamar</span></div>`);
+  const inRoom=new Set(S.rooms[ri].items.map(it=>it.nama.toLowerCase()));
+  const fromPreset=[];
+  S.presets.forEach(p=>p.items.forEach(nm=>{if(nm.toLowerCase().includes(q)&&!inRoom.has(nm.toLowerCase())&&fromPreset.length<4)fromPreset.push(nm);}));
+  // Also suggest from global inventory
+  const fromInv=INV.filter(iv=>iv.nama.toLowerCase().includes(q)&&!inRoom.has(iv.nama.toLowerCase())&&!fromPreset.includes(iv.nama)).slice(0,3).map(iv=>iv.nama);
+  const allSug=[...new Set([...fromPreset,...fromInv])].slice(0,6);
+  const preItems=allSug.map(nm=>`<div class="qa-item" onclick="qaPickPreset(${ri},'${esc(nm).replace(/'/g,"\\'")}')"><span>${esc(nm)}</span><span class="qa-tag pr">${INV.find(x=>x.nama===nm)?'Inventaris':'Preset'}</span></div>`);
+  const html=[...existing,...preItems].join('');
+  if(html){sug.style.display='block';sug.innerHTML=html;}else sug.style.display='none';
+}
+function hideQaSug(ri){const s=document.getElementById('qas'+ri);if(s)s.style.display='none';}
+function qaPickExist(ri,name){const inp=document.getElementById('qa'+ri);if(inp)inp.value=name;hideQaSug(ri);const it=S.rooms[ri].items.find(x=>x.nama.toLowerCase()===name.toLowerCase());if(it){_qaPending[ri]=name;const txt=document.getElementById('qamTxt'+ri);if(txt)txt.textContent=`"${name}" sudah ada (Diambil: ${it.diambil}). Gabung atau Tambah Baru?`;const m=document.getElementById('qam'+ri);if(m)m.classList.add('show');}}
+function qaPickPreset(ri,name){const inp=document.getElementById('qa'+ri);if(inp)inp.value=name;hideQaSug(ri);qaSubmit(ri,name);}
+function onQaKey(e,ri){
+  if(e.key==='Escape'){qaClear(ri);return;}
+  if(e.key==='Tab'){e.preventDefault();const first=document.querySelector(`#qas${ri} .qa-item`);if(first)first.click();return;}
+  if(e.key==='Enter'){e.preventDefault();qaSubmitBtn(ri);}
+}
+function qaSubmitBtn(ri){
+  const inp=document.getElementById('qa'+ri);const val=(inp?.value||'').trim();if(!val)return;
+  const dup=S.rooms[ri].items.find(it=>it.nama.toLowerCase()===val.toLowerCase());
+  if(dup){_qaPending[ri]=val;const txt=document.getElementById('qamTxt'+ri);if(txt)txt.textContent=`"${esc(val)}" sudah ada (Diambil: ${dup.diambil}). Gabung atau Tambah Baru?`;const m=document.getElementById('qam'+ri);if(m)m.classList.add('show');hideQaSug(ri);return;}
+  qaSubmit(ri,val);
+}
+function qaSubmit(ri,name){
+  if(!name)return;pushUndo(ri);S.rooms[ri].items.push(freshItem(name));scheduleSave();
+  renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);
+  const inp=document.getElementById('qa'+ri);if(inp)inp.value='';hideQaSug(ri);hideQaMerge(ri);
+  const j=S.rooms[ri].items.length-1;setTimeout(()=>editRow(ri,j),60);
+}
+function qaGabung(ri){const name=_qaPending[ri];if(!name)return;const it=S.rooms[ri].items.find(x=>x.nama.toLowerCase()===name.toLowerCase());if(!it){qaSubmit(ri,name);return;}it.diambil=(it.diambil||0)+1;scheduleSave();renderTable(ri);renderRoomStats(ri);renderSisaList(ri);const inp=document.getElementById('qa'+ri);if(inp)inp.value='';hideQaMerge(ri);showToast(`✅ Diambil "${name}" → ${it.diambil}`);}
+function qaBaru(ri){const name=_qaPending[ri];hideQaMerge(ri);if(name)qaSubmit(ri,name+'');}
+function qaClear(ri){const inp=document.getElementById('qa'+ri);if(inp)inp.value='';hideQaSug(ri);hideQaMerge(ri);delete _qaPending[ri];}
+function hideQaMerge(ri){const m=document.getElementById('qam'+ri);if(m)m.classList.remove('show');delete _qaPending[ri];}
+
+/* ══════════════════════════════════════
+   §14 · MERGE DUPLICATES
+══════════════════════════════════════ */
+function mergeDup(ri){
+  const items=S.rooms[ri].items;const seen={};const merged=[];let cnt=0;
+  items.forEach(it=>{const key=(it.nama||'').toLowerCase().trim();if(!key){merged.push({...it});return;}if(seen[key]!==undefined){merged[seen[key]].diambil=(merged[seen[key]].diambil||0)+(it.diambil||0);merged[seen[key]].retur=(merged[seen[key]].retur||0)+(it.retur||0);if(it.catatan)merged[seen[key]].catatan=[merged[seen[key]].catatan,it.catatan].filter(Boolean).join('; ');cnt++;}else{seen[key]=merged.length;merged.push({...it});}});
+  if(!cnt){showToast('Tidak ada duplikat ditemukan');return;}
+  pushUndo(ri);S.rooms[ri].items=merged;scheduleSave();renderTable(ri);renderRoomStats(ri);renderSisaList(ri);showToast(`✅ ${cnt} duplikat digabung`);
+}
+
+/* ══════════════════════════════════════
+   §15 · BULK EDIT
+══════════════════════════════════════ */
+let _beRoom=-1,_beSel=new Set();
+function openBE(ri){_beRoom=ri;_beSel=new Set();renderBE();OM('ovBE');}
+function renderBE(){
+  const r=S.rooms[_beRoom];const items=r.items.filter(it=>it.nama);
+  document.getElementById('beBody').innerHTML=`
+    <div class="be-set">
+      <label>Set Diambil</label><input class="be-num" id="beAm" type="number" min="0" placeholder="—" />
+      <label style="margin-left:8px">Set Retur</label><input class="be-num" id="beRe" type="number" min="0" placeholder="—" />
+    </div>
+    <div class="be-list" id="beList">
+      ${items.map((it,k)=>{const j=r.items.indexOf(it);const sisa=(it.diambil||0)-(it.retur||0);const sc=sisa>0?'sp':sisa===0?'sz':'sn';
+        return`<div class="be-row${_beSel.has(j)?' on':''}" onclick="toggleBeSel(${j})" data-j="${j}">
+          <span class="be-chk">${_beSel.has(j)?'✓':''}</span><span class="be-nm">${esc(it.nama)}</span><span class="be-cur"><span class="sc ${sc}">${sisa}</span></span></div>`;
+      }).join('')}
+      ${!items.length?`<div style="padding:18px;text-align:center;color:var(--txt3);font-size:12px">Tidak ada barang</div>`:''}
+    </div>`;
+  document.getElementById('beFoot').innerHTML=`<button class="btn bg" onclick="CM('ovBE')">Batal</button><button class="btn br" onclick="beHapus()">🗑 Hapus Dipilih</button><button class="btn ba" onclick="beTerapkan()">✅ Terapkan</button>`;
+}
+function toggleBeSel(j){if(_beSel.has(j))_beSel.delete(j);else _beSel.add(j);renderBE();}
+function toggleBeAll(){const r=S.rooms[_beRoom];const items=r.items.filter(it=>it.nama);if(_beSel.size===items.length){_beSel=new Set();}else{r.items.forEach((it,j)=>{if(it.nama)_beSel.add(j);});}renderBE();}
+function beTerapkan(){if(!_beSel.size){showToast('Pilih item dulu',true);return;}const am=document.getElementById('beAm')?.value;const re=document.getElementById('beRe')?.value;if(am===''&&re===''){showToast('Isi nilai Diambil atau Retur',true);return;}pushUndo(_beRoom);_beSel.forEach(j=>{const it=S.rooms[_beRoom].items[j];if(!it)return;if(am!=='')it.diambil=Math.max(0,parseInt(am)||0);if(re!=='')it.retur=Math.max(0,parseInt(re)||0);});scheduleSave();CM('ovBE');renderTable(_beRoom);renderRoomStats(_beRoom);renderSisaList(_beRoom);showToast(`✅ ${_beSel.size} item diupdate`);}
+function beHapus(){if(!_beSel.size){showToast('Pilih item dulu',true);return;}if(!confirm(`Hapus ${_beSel.size} item?`))return;pushUndo(_beRoom);const idx=Array.from(_beSel).sort((a,b)=>b-a);idx.forEach(j=>S.rooms[_beRoom].items.splice(j,1));scheduleSave();CM('ovBE');renderTable(_beRoom);renderRoomStats(_beRoom);renderSisaList(_beRoom);refreshDot(_beRoom);showToast(`✅ ${idx.length} item dihapus`);}
+
+/* ══════════════════════════════════════
+   §16 · ROOM STATS + SISA
+══════════════════════════════════════ */
+function renderRoomStats(ri,ctx){
+  const r=S.rooms[ri];const el=(ctx||document).querySelector(`#stats${ri}`);if(!el)return;
+  const cnt=r.items.filter(it=>it.nama).length,tA=r.items.reduce((s,x)=>s+(x.diambil||0),0),tR=r.items.reduce((s,x)=>s+(x.retur||0),0),tS=tA-tR;
+  const sc=tS>0?'sp':tS===0?'sz':'sn';
+  el.innerHTML=`
+    <div class="rstat"><div class="rstat-l">Item</div><div class="rstat-v">${cnt}</div></div>
+    <div class="rstat"><div class="rstat-l">Diambil</div><div class="rstat-v" style="color:var(--blue)">${tA}</div></div>
+    <div class="rstat"><div class="rstat-l">Retur</div><div class="rstat-v" style="color:var(--ylw)">${tR}</div></div>
+    <div class="rstat"><div class="rstat-l">Total Sisa</div><div class="rstat-v ${sc}">${tS}</div></div>`;
+}
+function toggleSisa(ri){const btn=document.getElementById('st'+ri),body=document.getElementById('sl'+ri);if(!btn||!body)return;const open=body.classList.toggle('open');btn.classList.toggle('open',open);}
+function renderSisaList(ri,ctx){
+  const r=S.rooms[ri];const el=(ctx||document).querySelector(`#sl${ri}`);if(!el)return;
+  const items=r.items.filter(it=>it.nama);const sum=document.getElementById('stsum'+ri);
+  const tS=r.items.reduce((s,x)=>s+(x.diambil||0)-(x.retur||0),0);const sc=tS>0?'sp':tS===0?'sz':'sn';
+  if(sum)sum.innerHTML=`Total: <span class="sc ${sc}" style="font-size:11px">${tS}</span>`;
+  if(!items.length){el.innerHTML=`<div style="padding:14px;text-align:center;color:var(--txt3);font-size:12px">Tidak ada barang</div>`;return;}
+  el.innerHTML=items.map(it=>{const s=(it.diambil||0)-(it.retur||0);const sc=s>0?'sp':s===0?'sz':'sn';return`<div class="sisa-item"><span class="sisa-nm">${esc(it.nama)}</span><span class="sisa-eq">${it.diambil||0}−${it.retur||0}</span><span class="sc ${sc}" style="font-size:11px">${s}</span></div>`;}).join('');
+}
+
+/* ══════════════════════════════════════
+   §17 · SELESAI (REKAP → HISTORY)
+══════════════════════════════════════ */
+function openSelesai(ri){
+  commitEdit();const r=S.rooms[ri];const items=r.items.filter(it=>it.nama);
+  const tA=r.items.reduce((s,x)=>s+(x.diambil||0),0),tR=r.items.reduce((s,x)=>s+(x.retur||0),0),tS=tA-tR;
+  const sc=tS>0?'sp':tS===0?'sz':'sn';const hasWarning=r.items.some(it=>(it.retur||0)>(it.diambil||0));
+  document.getElementById('selBody').innerHTML=`
+    <div class="rmeta">
+      <div class="rm-g"><div class="rm-l">Pasien</div><div class="rm-v">${esc(r.patient)||'(Tanpa nama)'}</div></div>
+      <div class="rm-g"><div class="rm-l">Kamar</div><div class="rm-v">OK ${ri+1}</div></div>
+      <div class="rm-g"><div class="rm-l">Mulai Operasi</div><div class="rm-v">${r.startTime||'—'}</div></div>
+      <div class="rm-g"><div class="rm-l">Selesai</div><div class="rm-v">${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</div></div>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Sisa Per Barang</div>
+    ${items.map((it,j)=>{const s2=(it.diambil||0)-(it.retur||0);const sc2=s2>0?'sp':s2===0?'sz':'sn';
+      return`<div class="rrow"><span class="rno">${j+1}</span><span class="rnm">${esc(it.nama)}</span>
+        <div class="rchips"><span class="chip ca">↓${it.diambil||0}</span><span class="chip cr">↩${it.retur||0}</span>
+        ${it.catatan?`<span class="chip" style="border-color:rgba(251,191,36,.3);color:var(--ylw)" title="${esc(it.catatan)}">📝</span>`:''}
+        <span class="sc ${sc2} chip cs">Sisa:${s2}</span></div></div>`;}).join('')}
+    <div class="totals" style="margin-top:10px">
+      <div class="tot"><div class="tot-l">Diambil</div><div class="tot-v" style="color:var(--blue)">${tA}</div></div>
+      <div class="tot"><div class="tot-l">Retur</div><div class="tot-v" style="color:var(--ylw)">${tR}</div></div>
+      <div class="tot"><div class="tot-l">Sisa</div><div class="sc ${sc}" style="font-size:20px;display:block;text-align:center;padding:0;background:none">${tS}</div></div>
+    </div>
+    ${hasWarning?`<div class="warnbox">⚠ Ada item dengan retur melebihi jumlah yang diambil. Periksa kembali sebelum menyimpan.</div>`:''}`;
+  document.getElementById('selFoot').innerHTML=`
+    <button class="btn bg" onclick="CM('ovSel')">Batal</button>
+    <button class="btn bbl" onclick="CM('ovSel')">← Kembali Edit</button>
+    <button class="btn ba" onclick="konfirmasiSelesai(${ri})">✅ Simpan & Reset Kamar</button>`;
+  OM('ovSel');
+}
+function konfirmasiSelesai(ri){
+  const r=S.rooms[ri];const now=new Date();const selesaiTime=nowStr();
+  const durasi=r.timerStart?fmtElapsed(Date.now()-new Date(r.timerStart)):'';
+  const H=getHistory();
+  H.entries.unshift({id:Date.now(),roomId:ri,patient:r.patient||'(Tanpa nama)',startTime:r.startTime||'—',selesaiTime,durasi,items:JSON.parse(JSON.stringify(r.items.filter(it=>it.nama))),savedAt:now.toISOString()});
+  saveHistory(H);
+
+  // Ambil sisa barang sebelum reset
+  const sisaItems=r.items.filter(it=>it.nama&&((it.diambil||0)-(it.retur||0))>0)
+    .map(it=>({nama:it.nama,sisa:(it.diambil||0)-(it.retur||0)}));
+
+  // Simpan nextPatient sebelum reset
+  const savedNP=JSON.parse(JSON.stringify(r.nextPatient));
+
+  S.rooms[ri]={...freshRoom(ri),id:ri,nextPatient:savedNP};scheduleSave();
+  const old=document.querySelector(`.panel[data-i="${ri}"]`);const neo=mkRoom(ri);if(old)old.replaceWith(neo);
+  CM('ovSel');activeTab=ri;applyTab();refreshDot(ri);refreshHistTab();
+  showToast(`✅ Operasi ${r.patient||'Kamar '+(ri+1)} disimpan ke riwayat`);
+  addLog('info',`Selesai: Kamar ${ri+1} — ${r.patient}`);
+
+  // Langsung transfer sisa ke pasien berikutnya tanpa konfirmasi
+  if(sisaItems.length>0){
+    transferSisaToNP(ri,sisaItems);
+    const npNama=S.rooms[ri].nextPatient.nama;
+    showToast(`🔄 ${sisaItems.length} item sisa otomatis ke persiapan${npNama?' '+npNama:' berikutnya'}`);
+  }
+}
+
+/* ══════════════════════════════════════
+   §18 · HISTORY PANEL
+══════════════════════════════════════ */
+function mkHistPanel(){const d=document.createElement('div');d.className='panel';d.dataset.i=6;d.id='histPanel';d.innerHTML=buildHistHTML();return d;}
+function buildHistHTML(){
+  const H=getHistory();const all=H.entries;
+  const filt=histFilter==='all'?all:all.filter(h=>h.roomId===(parseInt(histFilter)||0));
+  const fbts=['all',...Array.from({length:ROOMS},(_,i)=>String(i))].map(f=>`<button class="fc${histFilter===f?' on':''}" onclick="setHFilter('${f}')">${f==='all'?'Semua':'OK '+(parseInt(f)+1)}</button>`).join('');
+  if(!filt.length)return`<div class="hfilter">${fbts}</div><div class="hempty">📋 Belum ada riwayat.<br><br>Selesaikan operasi untuk menyimpan riwayat pasien.</div>`;
+  return`<div class="hfilter">${fbts}</div>`+filt.map(h=>{
+    const tA=h.items.reduce((s,x)=>s+(x.diambil||0),0),tR=h.items.reduce((s,x)=>s+(x.retur||0),0),tS=tA-tR;const sc=tS>0?'sp':tS===0?'sz':'sn';const cnt=h.items.filter(it=>it.nama).length;
+    return`<div class="hcard"><div class="hcard-top"><span class="hroom">OK ${h.roomId+1}</span><span class="hnm">${esc(h.patient)}</span><span class="sc ${sc}" style="flex-shrink:0">${tS}</span></div>
+      <div class="hmeta">Mulai: ${h.startTime||'—'} · Selesai: ${h.selesaiTime}${h.durasi?' · ⏱ '+h.durasi:''}<br>${cnt} barang · Ambil: ${tA} · Retur: ${tR}</div>
+      <div class="hacts"><button class="btn bg" onclick="openHD(${h.id})">🔍 Detail</button><button class="btn bbl" onclick="openRst(${h.id})">♻️ Pulihkan</button><button class="btn br" onclick="delHist(${h.id})">🗑 Hapus</button></div>
+    </div>`;}).join('');
+}
+function setHFilter(f){histFilter=f;rebuildHistPanel();}
+function rebuildHistPanel(){const p=document.getElementById('histPanel');if(p)p.innerHTML=buildHistHTML();}
+function findHist(id){return getHistory().entries.find(h=>h.id===id);}
+function openHD(id){
+  const h=findHist(id);if(!h){showToast('❌ Data tidak ditemukan',true);return;}
+  const items=h.items.filter(it=>it.nama),tA=h.items.reduce((s,x)=>s+(x.diambil||0),0),tR=h.items.reduce((s,x)=>s+(x.retur||0),0),tS=tA-tR;const sc=tS>0?'sp':tS===0?'sz':'sn';
+  document.getElementById('hdBody').innerHTML=`<div class="rmeta"><div class="rm-g"><div class="rm-l">Pasien</div><div class="rm-v">${esc(h.patient)}</div></div><div class="rm-g"><div class="rm-l">Kamar</div><div class="rm-v">OK ${h.roomId+1}</div></div><div class="rm-g"><div class="rm-l">Mulai</div><div class="rm-v">${h.startTime||'—'}</div></div><div class="rm-g"><div class="rm-l">Selesai</div><div class="rm-v">${h.selesaiTime}</div></div></div>
+    ${items.map((it,j)=>{const s2=(it.diambil||0)-(it.retur||0);const sc2=s2>0?'sp':s2===0?'sz':'sn';return`<div class="rrow"><span class="rno">${j+1}</span><span class="rnm">${esc(it.nama)}</span><div class="rchips"><span class="chip ca">↓${it.diambil||0}</span><span class="chip cr">↩${it.retur||0}</span>${it.catatan?`<span class="chip" style="border-color:rgba(251,191,36,.3);color:var(--ylw)">📝</span>`:''}<span class="sc ${sc2} chip cs">Sisa:${s2}</span></div></div>`;}).join('')}
+    <div class="totals" style="margin-top:10px"><div class="tot"><div class="tot-l">Diambil</div><div class="tot-v" style="color:var(--blue)">${tA}</div></div><div class="tot"><div class="tot-l">Retur</div><div class="tot-v" style="color:var(--ylw)">${tR}</div></div><div class="tot"><div class="tot-l">Sisa</div><div class="sc ${sc}" style="font-size:20px;display:block;text-align:center;padding:0;background:none">${tS}</div></div></div>`;
+  document.getElementById('hdFoot').innerHTML=`<button class="btn bg" onclick="CM('ovHD')">Tutup</button><button class="btn br" onclick="delHist(${h.id});CM('ovHD')">🗑 Hapus</button><button class="btn bbl" onclick="CM('ovHD');openRst(${h.id})">♻️ Pulihkan</button>`;
+  OM('ovHD');
+}
+function delHist(id){if(!confirm('Hapus riwayat ini?'))return;const H=getHistory();H.entries=H.entries.filter(h=>h.id!==id);saveHistory(H);rebuildHistPanel();refreshHistTab();showToast('Riwayat dihapus');}
+let _rstId=null;
+function openRst(id){
+  _rstId=id;const h=findHist(id);if(!h)return;
+  document.getElementById('rstBody').innerHTML=`<p style="font-size:13px;color:var(--txt3);margin-bottom:12px">Pilih kamar untuk memulihkan <b style="color:var(--txt)">${esc(h.patient)}</b>.</p>
+    ${Array.from({length:ROOMS},(_,i)=>{const r=S.rooms[i];const busy=r.patient||r.items.length>0;
+      return`<div class="rcard" onclick="doRst(${i})"><span class="room-badge" style="margin:0;flex-shrink:0">OK ${i+1}</span><div style="flex:1"><div style="font-size:14px;font-weight:600">${busy?esc(r.patient)||'Ada data aktif':'Kamar kosong'}</div><div style="font-size:11px;margin-top:2px;color:${busy?'var(--or)':'var(--grn)'}">${busy?'⚠ Data aktif akan diganti':'✓ Aman'}</div></div><span style="color:var(--acc);font-size:18px">→</span></div>`;
+    }).join('')}`;
+  OM('ovRst');
+}
+function doRst(toRoom){
+  const h=findHist(_rstId);if(!h){CM('ovRst');return;}
+  const r=S.rooms[toRoom];r.patient=h.patient;r.startTime=h.startTime;r.items=JSON.parse(JSON.stringify(h.items));r.status='persiapan';doSaveNow();CM('ovRst');
+  const old=document.querySelector(`.panel[data-i="${toRoom}"]`);const neo=mkRoom(toRoom);if(old)old.replaceWith(neo);
+  activeTab=toRoom;applyTab();refreshDot(toRoom);showToast(`✅ ${h.patient} dipulihkan ke Kamar ${toRoom+1}`);
+}
+
+/* ══════════════════════════════════════
+   §19 · REKAP HARIAN
+══════════════════════════════════════ */
+function mkHarianPanel(){const d=document.createElement('div');d.className='panel';d.dataset.i=7;d.id='harianPanel';d.innerHTML=buildHarianHTML();return d;}
+function buildHarianHTML(){
+  const H=getHistory();const today=rhDate;const entries=H.entries.filter(h=>h.selesaiTime&&h.selesaiTime.includes(today));const active=S.rooms.filter(r=>r.patient||r.items.length>0);
+  const tOp=entries.length,tItem=entries.reduce((s,h)=>s+h.items.filter(it=>it.nama).length,0),tA=entries.reduce((s,h)=>s+h.items.reduce((ss,it)=>ss+(it.diambil||0),0),0),tR=entries.reduce((s,h)=>s+h.items.reduce((ss,it)=>ss+(it.retur||0),0),0);
+  return`
+    <div class="date-filter"><label style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px">Tanggal</label>
+      <input class="date-inp" type="date" value="${new Date().toISOString().slice(0,10)}" onchange="onRhDate(this.value)" />
+      <button class="btn bg" onclick="rhDate=todayStr();rebuildHarian()">Hari Ini</button></div>
+    <div class="rh-summary">
+      <div class="rhs"><div class="rhs-l">Operasi</div><div class="rhs-v">${tOp}</div></div>
+      <div class="rhs"><div class="rhs-l">Total Barang</div><div class="rhs-v">${tItem}</div></div>
+      <div class="rhs"><div class="rhs-l">Total Diambil</div><div class="rhs-v" style="color:var(--blue)">${tA}</div></div>
+      <div class="rhs"><div class="rhs-l">Total Sisa</div><div class="rhs-v ${tA-tR>0?'sp':tA-tR===0?'sz':'sn'}">${tA-tR}</div></div>
+    </div>
+    ${active.length?`<div class="rh-head">🟢 Kamar Aktif</div>${active.map(r=>{const tA2=r.items.reduce((s,x)=>s+(x.diambil||0),0),tS2=r.items.reduce((s,x)=>s+(x.diambil||0)-(x.retur||0),0),dur=r.timerStart?fmtElapsed(Date.now()-new Date(r.timerStart)):'';return`<div class="hcard"><div class="hcard-top"><span class="hroom">OK ${r.id+1}</span><span class="hnm">${esc(r.patient)||'(tanpa nama)'}</span><span class="sc ${tS2>0?'sp':tS2===0?'sz':'sn'}" style="flex-shrink:0">${tS2}</span></div><div class="hmeta">Mulai: ${r.startTime||'—'}${dur?' · ⏱ '+dur:''} · ${r.items.filter(it=>it.nama).length} barang · Diambil: ${tA2}</div></div>`;}).join('')}`:''}
+    ${entries.length?`<div class="rh-head" style="margin-top:14px">✅ Selesai — ${today}</div>${entries.map(h=>{const tA3=h.items.reduce((s,x)=>s+(x.diambil||0),0),tR3=h.items.reduce((s,x)=>s+(x.retur||0),0),tS3=tA3-tR3;const sc=tS3>0?'sp':tS3===0?'sz':'sn';return`<div class="hcard"><div class="hcard-top"><span class="hroom">OK ${h.roomId+1}</span><span class="hnm">${esc(h.patient)}</span><span class="sc ${sc}" style="flex-shrink:0">${tS3}</span></div><div class="hmeta">Mulai: ${h.startTime||'—'} · Selesai: ${h.selesaiTime}${h.durasi?' · ⏱ '+h.durasi:''}<br>${h.items.filter(it=>it.nama).length} barang · Ambil: ${tA3} · Retur: ${tR3}</div><div class="hacts"><button class="btn bg" onclick="openHD(${h.id})">🔍 Detail</button><button class="btn bbl" onclick="openRst(${h.id})">♻️ Pulihkan</button></div></div>`;}).join('')}`:`<div class="hempty" style="margin-top:14px">Tidak ada operasi selesai pada ${today}.</div>`}`;
+}
+function onRhDate(v){const d=new Date(v);rhDate=d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});rebuildHarian();}
+function rebuildHarian(){const p=document.getElementById('harianPanel');if(p)p.innerHTML=buildHarianHTML();}
+
+/* ══════════════════════════════════════
+   §20 · STATISTIK
+══════════════════════════════════════ */
+function mkStatistikPanel(){const d=document.createElement('div');d.className='panel';d.dataset.i=8;d.id='statPanel';d.innerHTML=buildStatHTML();return d;}
+function rebuildStatistik(){const p=document.getElementById('statPanel');if(p)p.innerHTML=buildStatHTML();}
+function buildStatHTML(){
+  const H=getHistory();const all=H.entries;if(!all.length)return`<div class="hempty">📊 Belum ada data riwayat untuk dianalisis.<br><br>Selesaikan beberapa operasi terlebih dahulu.</div>`;
+  const itemMap={};all.forEach(h=>{h.items.filter(it=>it.nama).forEach(it=>{const key=it.nama.toLowerCase().trim();if(!itemMap[key])itemMap[key]={nama:it.nama,cnt:0,totalA:0,totalR:0};itemMap[key].cnt++;itemMap[key].totalA+=(it.diambil||0);itemMap[key].totalR+=(it.retur||0);});});
+  const sorted=Object.values(itemMap).sort((a,b)=>b.totalA-a.totalA);const top=sorted.slice(0,15);const maxA=top[0]?.totalA||1;
+  const tOp=all.length,tPasien=new Set(all.map(h=>h.patient)).size,tItems=Object.keys(itemMap).length,tA=all.reduce((s,h)=>s+h.items.reduce((ss,it)=>ss+(it.diambil||0),0),0),tR=all.reduce((s,h)=>s+h.items.reduce((ss,it)=>ss+(it.retur||0),0),0),avgSisa=tA>0?Math.round(((tA-tR)/tA)*100):0;
+  return`<div class="stat-nums">
+    <div class="sn-card"><div class="sn-l">Total Operasi</div><div class="sn-v">${tOp}</div></div>
+    <div class="sn-card"><div class="sn-l">Pasien Unik</div><div class="sn-v">${tPasien}</div></div>
+    <div class="sn-card"><div class="sn-l">Jenis Barang</div><div class="sn-v">${tItems}</div></div>
+    <div class="sn-card"><div class="sn-l">Avg % Sisa</div><div class="sn-v" style="color:var(--acc)">${avgSisa}%</div></div>
+  </div>
+  <div class="stat-section"><div class="ss-title">📊 Top Barang (Total Diambil)</div>
+    ${top.map(it=>{const pct=Math.round((it.totalA/maxA)*100);return`<div class="bar-row"><div class="bar-lbl" title="${esc(it.nama)}">${esc(it.nama)}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><div class="bar-val">${it.totalA}</div></div>`;}).join('')}
+  </div>
+  <div class="stat-section"><div class="ss-title">📋 Detail Per Barang</div><div style="overflow-x:auto">
+    <table><thead><tr><th>#</th><th>Nama Barang</th><th style="text-align:right">Ops</th><th style="text-align:right">Total Ambil</th><th style="text-align:right">Total Retur</th><th style="text-align:right">Total Sisa</th><th style="text-align:right">Avg/Op</th></tr></thead><tbody>
+    ${sorted.slice(0,30).map((it,k)=>{const sisa=it.totalA-it.totalR;const sc=sisa>0?'sp':sisa===0?'sz':'sn';return`<tr class="drow"><td class="td-no">${k+1}</td><td style="font-size:13px">${esc(it.nama)}</td><td style="font-family:var(--M);font-size:12px;text-align:right">${it.cnt}</td><td style="font-family:var(--M);font-size:12px;text-align:right;color:var(--blue)">${it.totalA}</td><td style="font-family:var(--M);font-size:12px;text-align:right;color:var(--ylw)">${it.totalR}</td><td style="text-align:right"><span class="sc ${sc}">${sisa}</span></td><td style="font-family:var(--M);font-size:12px;text-align:right;color:var(--txt3)">${(it.totalA/it.cnt).toFixed(1)}</td></tr>`;}).join('')}
+    </tbody></table></div></div>`;
+}
+
+/* ══════════════════════════════════════
+   §21 · INVENTARIS GLOBAL
+══════════════════════════════════════ */
+function mkInvPanel(){
+  const d=document.createElement('div');d.className='panel';d.dataset.i=10;
+  d.innerHTML=`
+    <div class="sec-hdr">
+      <div class="sec-title">📦 Inventaris Alkes &amp; Obat</div>
+      <div class="sec-acts">
+        <button class="btn ba" onclick="toggleInvForm()">＋ Tambah Item</button>
+        <button class="btn bgr" onclick="exportExcel()">📥 Export Excel</button>
+      </div>
+    </div>
+    <div class="inv-form-card" id="invFormCard">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--acc)" id="invFormTitle">➕ Tambah Item Baru</div>
+      <div class="fgrid" id="invFGrid">
+        <div class="field"><label>Nama Item *</label><input type="text" id="inv-nama" placeholder="Sarung Tangan Steril" /></div>
+        <div class="field"><label>Kategori *</label><select id="inv-kat"><option value="">Pilih...</option><option value="alkes">Alkes</option><option value="obat">Obat</option><option value="bahan">Bahan Habis Pakai</option></select></div>
+        <div class="field"><label>Stok *</label><input type="number" id="inv-stok" placeholder="0" min="0" /></div>
+        <div class="field"><label>Satuan</label><input type="text" id="inv-satuan" placeholder="pcs / box / ampul" /></div>
+        <div class="field"><label>Stok Minimum</label><input type="number" id="inv-min" placeholder="5" min="0" /></div>
+        <div class="field"><label>Keterangan</label><input type="text" id="inv-ket" placeholder="Opsional..." /></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn ba" onclick="saveInvItem()" id="invSaveBtn">💾 Simpan</button>
+        <button class="btn bg" onclick="toggleInvForm(false)">✕ Batal</button>
+      </div>
+    </div>
+    <div class="inv-toolbar">
+      <div class="inv-srch-w"><span class="inv-srch-icon">🔍</span><input class="inv-srch" type="search" id="invSrch" placeholder="Cari nama, kategori..." oninput="filterInv()" /></div>
+      <div class="fbtns">
+        <button class="fbtn on" onclick="setInvFilter(this,'semua')" data-f="semua">Semua</button>
+        <button class="fbtn" onclick="setInvFilter(this,'alkes')" data-f="alkes">Alkes</button>
+        <button class="fbtn" onclick="setInvFilter(this,'obat')" data-f="obat">Obat</button>
+        <button class="fbtn" onclick="setInvFilter(this,'bahan')" data-f="bahan">Bahan</button>
+        <button class="fbtn" onclick="setInvFilter(this,'lowstock')" data-f="lowstock">⚠ Stok Rendah</button>
+      </div>
+    </div>
+    <div class="inv-twrap"><table class="inv-tbl" id="invTable"><thead><tr><th>Nama Item</th><th>Kategori</th><th>Stok</th><th>Satuan</th><th>Min</th><th>Keterangan</th><th style="text-align:right">Aksi</th></tr></thead><tbody id="invTbody"></tbody></table></div>`;
+  return d;
+}
+function toggleInvForm(force=null){
+  const c=document.getElementById('invFormCard');const open=force===false?false:force===true?true:!c.classList.contains('open');
+  c.classList.toggle('open',open);
+  if(!open){clearInvForm();invEditId=null;document.getElementById('invFormTitle').textContent='➕ Tambah Item Baru';document.getElementById('invSaveBtn').textContent='💾 Simpan';}
+  else setTimeout(()=>document.getElementById('inv-nama')?.focus(),50);
+}
+function clearInvForm(){['inv-nama','inv-stok','inv-satuan','inv-min','inv-ket'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('err');}});const kat=document.getElementById('inv-kat');if(kat){kat.value='';kat.classList.remove('err');}}
+function saveInvItem(){
+  const nama=(document.getElementById('inv-nama')?.value||'').trim();const kat=document.getElementById('inv-kat')?.value;const stok=document.getElementById('inv-stok')?.value;
+  const satuan=(document.getElementById('inv-satuan')?.value||'').trim();const min=document.getElementById('inv-min')?.value;const ket=(document.getElementById('inv-ket')?.value||'').trim();
+  let ok=true;
+  const req=[['inv-nama',nama],['inv-kat',kat],['inv-stok',stok]];
+  req.forEach(([id,v])=>{const el=document.getElementById(id);if(!v&&el){el.classList.add('err');ok=false;}else if(el)el.classList.remove('err');});
+  if(!ok){showToast('Isi kolom wajib (*)',true);return;}
+  if(invEditId){const item=INV.find(x=>x.id===invEditId);if(item){Object.assign(item,{nama,kat,stok:Number(stok),satuan,min:Number(min)||0,ket});showToast('Item diperbarui ✓');}}
+  else{INV.push({id:'inv_'+Date.now(),nama,kat,stok:Number(stok),satuan,min:Number(min)||0,ket,createdAt:new Date().toISOString()});showToast('Item ditambahkan ✓');}
+  invEditId=null;scheduleSave();toggleInvForm(false);renderInvTable();
+}
+function editInvItem(id){
+  const item=INV.find(x=>x.id===id);if(!item)return;invEditId=id;
+  ['inv-nama','inv-stok','inv-satuan','inv-min','inv-ket'].forEach(fid=>{const key=fid.replace('inv-','').replace('ket','ket');});
+  document.getElementById('inv-nama').value=item.nama;document.getElementById('inv-kat').value=item.kat;document.getElementById('inv-stok').value=item.stok;document.getElementById('inv-satuan').value=item.satuan||'';document.getElementById('inv-min').value=item.min||'';document.getElementById('inv-ket').value=item.ket||'';
+  document.getElementById('invFormTitle').textContent='✏ Edit Item';document.getElementById('invSaveBtn').textContent='💾 Perbarui';toggleInvForm(true);
+}
+function deleteInvItem(id){
+  const item=INV.find(x=>x.id===id);if(!item)return;if(!confirm(`Hapus "${item.nama}"?`))return;
+  INV=INV.filter(x=>x.id!==id);scheduleSave();renderInvTable();showToast('Item dihapus');
+}
+function adjustStok(id,delta){
+  const item=INV.find(x=>x.id===id);if(!item)return;item.stok=Math.max(0,item.stok+delta);scheduleSave();renderInvTable();
+  if(item.stok===0)showToast(`⚠ Stok ${item.nama} habis!`,true);else if(item.stok<=(item.min||5))showToast(`⚠ Stok ${item.nama} mendekati minimum`,false,true);
+}
+function setInvFilter(btn,f){invFilter=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('on',b.dataset.f===f));renderInvTable();}
+function filterInv(){invSearch=(document.getElementById('invSrch')?.value||'').toLowerCase();renderInvTable();}
+function renderInvTable(){
+  const tbody=document.getElementById('invTbody');if(!tbody)return;
+  let items=[...INV];
+  if(invFilter!=='semua'){if(invFilter==='lowstock')items=items.filter(i=>i.stok<=(i.min||5));else items=items.filter(i=>i.kat===invFilter);}
+  if(invSearch)items=items.filter(i=>i.nama.toLowerCase().includes(invSearch)||(i.kat||'').toLowerCase().includes(invSearch)||(i.ket||'').toLowerCase().includes(invSearch));
+  if(!items.length){tbody.innerHTML=`<tr><td colspan="7"><div style="padding:28px;text-align:center;color:var(--txt3);font-size:12px">Tidak ada item ditemukan.</div></td></tr>`;return;}
+  const katL={alkes:'Alkes',obat:'Obat',bahan:'Bahan'};
+  tbody.innerHTML=items.map(item=>{
+    const sn=Number(item.stok),mn=Number(item.min)||5;let sc='ok',sl='Cukup';if(sn===0){sc='empty';sl='Habis';}else if(sn<=mn){sc='low';sl='Rendah';}
+    return`<tr class="drow"><td><strong>${esc(item.nama)}</strong></td>
+      <td><span class="kat-b ${item.kat||''}">${katL[item.kat]||item.kat||'—'}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px">
+        <button class="btn bg" style="padding:3px 8px;height:28px;font-size:14px" onclick="adjustStok('${item.id}',-1)">−</button>
+        <span class="stok-b ${sc}">${sn} <small style="font-weight:400">${sl}</small></span>
+        <button class="btn bg" style="padding:3px 8px;height:28px;font-size:14px" onclick="adjustStok('${item.id}',1)">＋</button>
+      </div></td>
+      <td style="color:var(--txt3)">${esc(item.satuan||'—')}</td>
+      <td style="font-family:var(--M);font-size:12px">${item.min||'—'}</td>
+      <td style="color:var(--txt3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(item.ket||'—')}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn bg" style="padding:4px 9px;font-size:11px" onclick="editInvItem('${item.id}')">✏</button>
+        <button class="btn br" style="padding:4px 9px;font-size:11px" onclick="deleteInvItem('${item.id}')">🗑</button>
+      </td></tr>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════
+   §22 · TEMPLATES
+══════════════════════════════════════ */
+let _tplRoom=-1,_tplMode='list',_tplId=null;
+function openTpl(ri){_tplRoom=ri;_tplMode='list';_tplId=null;renderTpl();OM('ovTpl');}
+function renderTpl(){
+  const body=document.getElementById('tplBody'),foot=document.getElementById('tplFoot');
+  if(_tplMode==='list'){
+    const tpls=S.templates||[];
+    body.innerHTML=`<p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Template menyimpan daftar barang + jumlah untuk dipakai ulang.</p>
+      ${tpls.length?`<div>${tpls.map(t=>`<div class="plcard"><span class="plnm">${esc(t.name)}</span><span class="plcnt">${t.items.length} item</span>
+        <button class="btn bbl" style="font-size:11px;padding:4px 9px" onclick="loadTpl(${_tplRoom},'${t.id}')">⬇ Load</button>
+        <button class="btn bg" style="font-size:11px;padding:4px 9px" onclick="previewTpl('${t.id}')">👁</button>
+        <button class="pidel" onclick="deleteTpl('${t.id}')">×</button></div>`).join('')}</div>`:`<div style="padding:20px;text-align:center;color:var(--txt3);font-size:13px">Belum ada template tersimpan.</div>`}`;
+    foot.innerHTML=`<button class="btn bg" onclick="CM('ovTpl')">Tutup</button><button class="btn ba" onclick="saveTplFromRoom(${_tplRoom})">💾 Simpan Kamar ${_tplRoom+1} sebagai Template</button>`;
+  }
+}
+function saveTplFromRoom(ri){
+  const r=S.rooms[ri];const items=r.items.filter(it=>it.nama);if(!items.length){showToast('Tidak ada barang untuk disimpan',true);return;}
+  const name=prompt(`Nama template? (${items.length} barang)`);if(!name)return;
+  if(!Array.isArray(S.templates))S.templates=[];
+  S.templates.push({id:'t_'+Date.now(),name:name.trim(),createdAt:nowStr(),items:JSON.parse(JSON.stringify(items))});
+  doSaveNow();renderTpl();showToast(`✅ Template "${name}" tersimpan`);
+}
+function loadTpl(ri,id){
+  const tpl=(S.templates||[]).find(t=>t.id===id);if(!tpl)return;
+  const r=S.rooms[ri];const msg=r.items.length?`Load template "${tpl.name}" akan MENGGANTI ${r.items.length} barang di Kamar ${ri+1}?`:`Load template "${tpl.name}" ke Kamar ${ri+1}?`;
+  if(!confirm(msg))return;pushUndo(ri);r.items=JSON.parse(JSON.stringify(tpl.items));scheduleSave();CM('ovTpl');renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);showToast(`✅ Template dimuat ke Kamar ${ri+1}`);
+}
+function previewTpl(id){const tpl=(S.templates||[]).find(t=>t.id===id);if(!tpl)return;alert(`Template: ${tpl.name}\n${tpl.items.map((it,j)=>`${j+1}. ${it.nama} (Ambil:${it.diambil} Retur:${it.retur})`).join('\n')}`);}
+function deleteTpl(id){if(!confirm('Hapus template?'))return;S.templates=(S.templates||[]).filter(t=>t.id!==id);doSaveNow();renderTpl();showToast('Template dihapus');}
+
+/* ══════════════════════════════════════
+   §23 · PRESET MANAGEMENT
+══════════════════════════════════════ */
+let _preRoom=-1,_preId=null,_preChk={};
+function openPreset(ri){_preRoom=ri;if(!_preId||!S.presets.find(p=>p.id===_preId))_preId=S.presets[0]?.id||null;document.getElementById('preSearchInp').value='';renderPresetBody('');OM('ovPre');}
+function renderPresetBody(filterQ){
+  const body=document.getElementById('preBody');if(!S.presets.length){body.innerHTML=`<div style="padding:20px;text-align:center;color:var(--txt3)">Belum ada preset. Klik ⚙️ Kelola.</div>`;return;}
+  if(!_preId)_preId=S.presets[0].id;const pr=S.presets.find(p=>p.id===_preId)||S.presets[0];_preId=pr.id;
+  if(!_preChk[_preId]){_preChk[_preId]={};pr.items.forEach((_,j)=>{_preChk[_preId][j]=true;});}
+  const q=(filterQ||'').toLowerCase();
+  const tabs=S.presets.map(p=>`<button class="ptab${p.id===_preId?' on':''}" onclick="switchPTab('${p.id}')">${esc(p.name)}</button>`).join('');
+  const rows=pr.items.map((nm,j)=>({nm,j})).filter(x=>!q||x.nm.toLowerCase().includes(q)).map(({nm,j})=>{const on=_preChk[_preId][j]!==false;return`<div class="pirow${on?' on':''}" onclick="toggleP('${_preId}',${j},this)"><span class="pck">${on?'✓':''}</span><span class="pinm">${esc(nm)}</span></div>`;}).join('');
+  body.innerHTML=`<div class="ptabs">${tabs}</div><div class="plist">${rows||`<div style="padding:14px;text-align:center;color:var(--txt3)">Tidak ada hasil</div>`}</div><p style="font-size:11px;color:var(--txt3);margin-top:7px">Klik item untuk centang/uncentang.</p>`;
+}
+function switchPTab(id){_preId=id;if(!_preChk[id]){_preChk[id]={};const p=S.presets.find(x=>x.id===id);if(p)p.items.forEach((_,j)=>{_preChk[id][j]=true;});}renderPresetBody(document.getElementById('preSearchInp')?.value||'');}
+function toggleP(pid,j,row){if(!_preChk[pid])_preChk[pid]={};const cur=_preChk[pid][j]!==false;_preChk[pid][j]=!cur;row.classList.toggle('on',!cur);row.querySelector('.pck').textContent=!cur?'✓':'';}
+function checkAllP(){const pr=S.presets.find(p=>p.id===_preId);if(!pr)return;pr.items.forEach((_,j)=>{_preChk[_preId][j]=true;});renderPresetBody(document.getElementById('preSearchInp')?.value||'');}
+function applyPreset(){
+  const pr=S.presets.find(p=>p.id===_preId);if(!pr)return;const ex=S.rooms[_preRoom].items.map(x=>x.nama);let n=0;pushUndo(_preRoom);
+  pr.items.forEach((nm,j)=>{if(_preChk[_preId]?.[j]!==false&&!ex.includes(nm)){S.rooms[_preRoom].items.push(freshItem(nm));n++;}});
+  scheduleSave();CM('ovPre');renderTable(_preRoom);renderRoomStats(_preRoom);renderSisaList(_preRoom);refreshDot(_preRoom);showToast(`${n} item ditambahkan ✅`);
+}
+let _kMode='list',_kId=null,_kItems=[];
+function openKelola(){_kMode='list';_kId=null;_kItems=[];renderKelola();OM('ovKel');}
+function renderKelola(){
+  const body=document.getElementById('kelBody'),foot=document.getElementById('kelFoot');
+  if(_kMode==='list'){
+    body.innerHTML=`<div>${S.presets.map(p=>`<div class="plcard"><span class="plnm">${esc(p.name)}</span><span class="plcnt">${p.items.length} item</span><button class="btn bg" style="font-size:11px;padding:4px 9px" onclick="kEdit('${p.id}')">✏️ Edit</button><button class="pidel" onclick="kDel('${p.id}')">×</button></div>`).join('')||`<div style="padding:20px;text-align:center;color:var(--txt3)">Belum ada preset.</div>`}</div>`;
+    foot.innerHTML=`<button class="btn bg" onclick="CM('ovKel');renderPresetBody('')">Selesai</button><button class="btn ba" onclick="kNew()">＋ Preset Baru</button>`;
+  }else{
+    const isNew=_kMode==='new';const pr=isNew?null:S.presets.find(x=>x.id===_kId);
+    body.innerHTML=`<p style="font-size:12px;color:var(--txt3);margin-bottom:8px">${isNew?'Preset baru':'Edit preset'}</p>
+      <input class="k-inp" id="kName" placeholder="Nama preset..." value="${esc(pr?.name||'')}" />
+      <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px">Daftar Item</div>
+      <div class="plist" id="kItemList" style="max-height:180px"></div>
+      <div class="k-row" style="margin-top:8px"><input class="k-inp" id="kAdd" placeholder="Nama barang baru..." style="margin:0" onkeydown="if(event.key==='Enter'){event.preventDefault();kAddItem()}" /><button class="btn ba" style="flex-shrink:0" onclick="kAddItem()">＋</button></div>`;
+    foot.innerHTML=`<button class="btn bg" onclick="_kMode='list';renderKelola()">← Kembali</button><button class="btn ba" onclick="kSave(${isNew})">💾 Simpan</button>`;
+    kRenderItems();
+  }
+}
+function kRenderItems(){const el=document.getElementById('kItemList');if(!el)return;el.innerHTML=_kItems.map((nm,j)=>`<div class="pirow" style="cursor:default"><span class="pinm">${esc(nm)}</span><button class="pidel" onclick="kDelItem(${j})">×</button></div>`).join('')||`<div style="padding:14px;text-align:center;color:var(--txt3);font-size:12px">— Belum ada item —</div>`;}
+function kEdit(id){_kMode='edit';_kId=id;const p=S.presets.find(x=>x.id===id);_kItems=p?[...p.items]:[];renderKelola();}
+function kNew(){_kMode='new';_kId=null;_kItems=[];renderKelola();}
+function kDelItem(j){_kItems.splice(j,1);kRenderItems();}
+function kAddItem(){const inp=document.getElementById('kAdd');if(!inp)return;const v=inp.value.trim();if(!v){inp.focus();return;}_kItems.push(v);inp.value='';kRenderItems();inp.focus();}
+function kDel(id){if(!confirm('Hapus preset?'))return;S.presets=S.presets.filter(p=>p.id!==id);doSaveNow();renderKelola();}
+function kSave(isNew){const name=(document.getElementById('kName')?.value||'').trim();if(!name){showToast('Isi nama preset',true);return;}if(!_kItems.length){showToast('Tambahkan minimal 1 item',true);return;}if(isNew){const id='p_'+Date.now();S.presets.push({id,name,items:[..._kItems]});_preId=id;}else{const p=S.presets.find(x=>x.id===_kId);if(p){p.name=name;p.items=[..._kItems];}}doSaveNow();_kMode='list';renderKelola();showToast(`✅ Preset tersimpan`);}
+
+/* ══════════════════════════════════════
+   §24 · TOOLS PANEL
+══════════════════════════════════════ */
+function mkToolsPanel(){const d=document.createElement('div');d.className='panel';d.dataset.i=9;d.id='toolsPanel';d.innerHTML=buildToolsHTML();return d;}
+function refreshToolsPanel(){const p=document.getElementById('toolsPanel');if(p)p.innerHTML=buildToolsHTML();}
+function getStorageHealth(){let total=0,keys={};try{for(let k in localStorage){if(!Object.prototype.hasOwnProperty.call(localStorage,k))continue;const sz=(localStorage.getItem(k)||'').length*2;keys[k]=sz;total+=sz;}}catch(e){}return{total,keys,pct:(total/(5*1024*1024))*100};}
+function buildToolsHTML(){
+  const sh=getStorageHealth();const pct=Math.min(100,sh.pct.toFixed(1));const pbc=pct>80?'danger':pct>50?'warn':'';
+  const logs=getSafeLogs().slice(0,20);const fmtB=b=>b>1048576?(b/1048576).toFixed(2)+' MB':b>1024?(b/1024).toFixed(1)+' KB':b+' B';
+  return`<div class="tools-grid">
+    <div class="tool-card">
+      <div class="tc-title">💾 Data &amp; Backup</div>
+      <button class="btn bgr btn-full" onclick="exportExcel()">📥 Export Excel (All Sheets)</button>
+      <button class="btn bbl btn-full" onclick="exportJSON()">📄 Export JSON (Backup Lengkap)</button>
+      <button class="btn bg btn-full" onclick="restoreFromFile()">📂 Restore dari File JSON</button>
+      <button class="btn bor btn-full" onclick="manualBackup()">🔒 Backup Manual Sekarang</button>
+    </div>
+    <div class="tool-card">
+      <div class="tc-title">📦 Penyimpanan Lokal</div>
+      <div class="health-row"><span class="health-key">Total digunakan</span><span class="health-val">${fmtB(sh.total)}</span></div>
+      <div class="health-row"><span class="health-key">Kamar OK</span><span class="health-val">${fmtB(sh.keys[KEY_DATA]||0)}</span></div>
+      <div class="health-row"><span class="health-key">Inventaris</span><span class="health-val">${fmtB(sh.keys[KEY_INV]||0)}</span></div>
+      <div class="health-row"><span class="health-key">Riwayat</span><span class="health-val">${fmtB(sh.keys[KEY_HIST]||0)}</span></div>
+      <div class="pbar"><div class="pbar-fill ${pbc}" style="width:${pct}%"></div></div>
+      <div style="font-size:10px;color:var(--txt3);margin-top:4px">${pct}% dari ~5 MB</div>
+    </div>
+    <div class="tool-card full">
+      <div class="tc-title">📋 Log Sistem (${logs.length})</div>
+      ${logs.length?`<div style="border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
+        ${logs.map(l=>`<div class="log-row"><span class="log-t">${new Date(l.time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span><span class="log-tp lt-${l.type}">${l.type}</span><span class="log-m">${esc(l.msg)}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:7px;margin-top:8px">
+        <button class="btn bg" onclick="exportLogs()">📤 Export Log</button>
+        <button class="btn br" onclick="clearLogs()">🗑 Hapus</button>
+      </div>`:`<div style="padding:18px;text-align:center;color:var(--txt3);font-size:12px">✅ Tidak ada log</div>`}
+    </div>
+    <div class="tool-card full">
+      <div class="tc-title">⚠ Reset Data</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn br" onclick="clearOldHist()">✂ Pangkas Riwayat Lama</button>
+        <button class="btn br" onclick="if(confirm('Reset SEMUA data kamar (inventaris tetap)?')){S=freshState();doSaveNow();buildAll();showToast('✅ Semua kamar direset');}">🗑 Reset Semua Kamar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ══════════════════════════════════════
+   §25 · EXPORT
+══════════════════════════════════════ */
+function exportJSON(){
+  const H=getHistory();const blob=new Blob([JSON.stringify({data:S,history:H,inventory:INV,logs:getSafeLogs(),exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`OK_Alkes_${new Date().toISOString().slice(0,16).replace(/[:.]/g,'-')}.json`;a.click();URL.revokeObjectURL(a.href);showToast('✅ File JSON diunduh');addLog('info','JSON export');
+}
+function exportExcel(){
+  if(!window.XLSX){showToast('⚠ SheetJS belum tersedia (perlu koneksi internet)',true);return;}
+  try{
+    const wb=XLSX.utils.book_new();
+    // Kamar Aktif
+    const act=[['Kamar','Pasien','Status','Mulai','Nama Barang','Diambil','Retur','Sisa','Catatan']];
+    S.rooms.forEach(r=>r.items.filter(it=>it.nama).forEach(it=>act.push([`OK ${r.id+1}`,r.patient,r.status,r.startTime,it.nama,it.diambil,it.retur,(it.diambil-it.retur),it.catatan||''])));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(act),'Kamar Aktif');
+    // Riwayat
+    const H=getHistory();const hist=[['Kamar','Pasien','Mulai','Selesai','Durasi','Nama Barang','Diambil','Retur','Sisa','Catatan']];
+    H.entries.forEach(h=>h.items.filter(it=>it.nama).forEach(it=>hist.push([`OK ${h.roomId+1}`,h.patient,h.startTime,h.selesaiTime,h.durasi||'',it.nama,it.diambil,it.retur,(it.diambil-it.retur),it.catatan||''])));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(hist),'Riwayat');
+    // Inventaris
+    const invData=[['Nama Item','Kategori','Stok','Satuan','Min Stok','Keterangan']];INV.forEach(i=>invData.push([i.nama,i.kat,i.stok,i.satuan||'',i.min||'',i.ket||'']));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(invData),'Inventaris');
+    // Preset
+    const pre=[['Nama Preset','Item']];S.presets.forEach(p=>p.items.forEach(nm=>pre.push([p.name,nm])));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pre),'Preset');
+    // Persiapan Pasien Berikutnya
+    const npData=[['Kamar','Pasien Berikutnya',...NP_CHECKS.map(c=>c.lbl),'Barang Persiapan','Catatan']];
+    S.rooms.forEach(r=>{const np=r.nextPatient||{};const barangList=(np.items||[]).map(it=>`${it.nama} ×${it.qty}`).join('; ');npData.push([`OK ${r.id+1}`,np.nama||'',...NP_CHECKS.map(c=>(np.checks||{})[c.id]?'✓':''),barangList,np.catatan||'']);});
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(npData),'Persiapan Berikutnya');
+    XLSX.writeFile(wb,`OK_Alkes_${new Date().toISOString().slice(0,16).replace(/[:.]/g,'-')}.xlsx`);
+    showToast('✅ File Excel diunduh (5 sheet)');addLog('info','Excel export');
+  }catch(e){showToast('❌ Export gagal: '+e.message,true);addLog('error','Excel export: '+e.message);}
+}
+function exportLogs(){const logs=getSafeLogs();const blob=new Blob([JSON.stringify(logs,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`OK_logs_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);showToast('✅ Log diunduh');}
+function manualBackup(){rotateBak();doSaveNow();refreshToolsPanel();showToast('✅ Backup tersimpan');}
+function restoreFromFile(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;const reader=new FileReader();
+    reader.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);if(!parsed.data&&!parsed.rooms)throw new Error('Format tidak dikenali');if(!confirm('Restore akan mengganti SEMUA data saat ini. Lanjutkan?'))return;rotateBak();
+      const nd=parsed.data||parsed;S.rooms=nd.rooms.slice(0,ROOMS).map((r,i)=>migrateRoom(r,i));while(S.rooms.length<ROOMS)S.rooms.push(freshRoom(S.rooms.length));
+      if(Array.isArray(nd.presets))S.presets=nd.presets;if(Array.isArray(nd.templates))S.templates=nd.templates;
+      if(parsed.history&&Array.isArray(parsed.history.entries))saveHistory(parsed.history);
+      if(Array.isArray(parsed.inventory))INV=parsed.inventory;
+      doSaveNow();buildAll();showToast('✅ Data berhasil direstore');addLog('info','File restore');
+    }catch(ex){showToast('❌ File tidak valid: '+ex.message,true);addLog('error','File restore: '+ex.message);}};
+    reader.readAsText(file);};inp.click();
+}
+function clearLogs(){if(!confirm('Hapus semua log?'))return;localStorage.removeItem(KEY_LOGS);refreshToolsPanel();showToast('Log dihapus');}
+function clearOldHist(){const H=getHistory();if(!H.entries.length){showToast('Tidak ada riwayat');return;}const keep=parseInt(prompt(`Simpan berapa entri terbaru? (saat ini ${H.entries.length})`,50))||50;if(isNaN(keep)||keep<0)return;H.entries=H.entries.slice(0,keep);saveHistory(H);rebuildHistPanel();refreshHistTab();refreshToolsPanel();showToast(`✅ Riwayat dipangkas ke ${keep} entri`);}
+
+/* ══════════════════════════════════════
+   §26 · SHARE + QR + IMPORT
+══════════════════════════════════════ */
+function openShare(){
+  commitEdit();const H=getHistory();const payload={data:S,hist:H,inv:INV};const allCode=encode(payload);
+  const tItems=S.rooms.reduce((s,r)=>s+r.items.filter(it=>it.nama).length,0);const active=S.rooms.filter(r=>r.patient||r.items.length).length;const sizeKB=Math.round(allCode.length*0.75/1024);
+  document.getElementById('allCT').textContent=allCode;
+  document.getElementById('shrSummary').innerHTML=[['🏥','Kamar aktif',`${active}/${ROOMS}`],['📋','Total barang',`${tItems}`],['📜','Riwayat',`${H.entries.length}`],['📦','Inventaris',`${INV.length}`],['💾','Ukuran',`~${sizeKB} KB`]].map(([ic,l,v])=>`<div style="display:flex;flex-direction:column;gap:2px;min-width:70px"><span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.5px">${ic} ${l}</span><span style="font-family:var(--M);font-size:13px;font-weight:600">${v}</span></div>`).join('<div style="width:1px;background:var(--bdr);align-self:stretch"></div>');
+  const box=document.getElementById('qrBox');const lbl=document.getElementById('qrLbl');box.innerHTML='';
+  if(allCode.length<=2800){try{new QRCode(box,{text:allCode,width:200,height:200,colorDark:'#22d3b4',colorLight:'#111d2e',correctLevel:QRCode.CorrectLevel.L});lbl.style.color='var(--txt3)';lbl.textContent=`✅ QR berisi semua data · ${sizeKB} KB`;}catch(e){box.innerHTML=`<p style="color:var(--txt3);font-size:12px;text-align:center">QR tidak tersedia</p>`;lbl.textContent='';}}
+  else{box.innerHTML=`<div style="text-align:center;padding:10px"><div style="font-size:28px;margin-bottom:8px">📄</div><div style="font-size:12px;color:var(--or);font-weight:600;margin-bottom:6px">Data terlalu besar untuk QR</div><div style="font-size:11px;color:var(--txt3);line-height:1.6">~${sizeKB} KB melebihi batas QR.<br>Gunakan <b style="color:var(--txt)">Salin Kode</b> di bawah.</div></div>`;lbl.style.color='var(--or)';lbl.textContent=`⚠ ${sizeKB} KB — gunakan kode teks`;}
+  OM('ovShr');
+}
+function cpTxt(elId){const txt=document.getElementById(elId)?.textContent||'';navigator.clipboard.writeText(txt).then(()=>showToast('✅ Kode disalin!')).catch(()=>{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('✅ Kode disalin!');});}
+function sWA(){const code=document.getElementById('allCT')?.textContent||'';window.open('https://wa.me/?text='+encodeURIComponent('Data OK Operasi:\n'+code),'_blank');}
+function openImport(){document.getElementById('impTA').value='';document.getElementById('impErr').style.display='none';OM('ovImp');}
+function doImport(){
+  const raw=document.getElementById('impTA').value.trim();const err=document.getElementById('impErr');err.style.display='none';
+  try{
+    const parsed=decode(raw);let nd=null,nh=null,ni=null;
+    if(parsed.data&&Array.isArray(parsed.data.rooms)){nd=parsed.data;nh=parsed.hist;ni=parsed.inv;}
+    else if(Array.isArray(parsed.rooms)){nd=parsed;}
+    if(!nd)throw new Error('Format tidak dikenali');
+    if(!confirm('Import akan mengganti SEMUA data saat ini. Lanjutkan?'))return;
+    rotateBak();S=nd;S.rooms=S.rooms.slice(0,ROOMS).map((r,i)=>migrateRoom(r,i));while(S.rooms.length<ROOMS)S.rooms.push(freshRoom(S.rooms.length));
+    if(!Array.isArray(S.presets)||!S.presets.length)S.presets=JSON.parse(JSON.stringify(DEFAULT_PRESETS));if(!Array.isArray(S.templates))S.templates=[];if(!S.meta)S.meta={lastSave:'',saveCount:0};
+    if(nh&&Array.isArray(nh.entries))saveHistory(nh);if(Array.isArray(ni))INV=ni;
+    doSaveNow();CM('ovImp');activeTab=0;buildAll();showToast('✅ Semua data berhasil diimport');addLog('info','Full import');
+  }catch(e){err.style.display='block';addLog('warn','Import fail: '+e.message);}
+}
+
+/* ══════════════════════════════════════
+   §27 · MORE MENU
+══════════════════════════════════════ */
+function toggleMore(ri){const d=document.getElementById('md'+ri);if(!d)return;const wasOpen=d.classList.contains('open');document.querySelectorAll('.more-drop.open').forEach(el=>el.classList.remove('open'));if(!wasOpen)d.classList.add('open');}
+function closeMore(ri){const d=document.getElementById('md'+ri);if(d)d.classList.remove('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.more-menu'))document.querySelectorAll('.more-drop.open').forEach(el=>el.classList.remove('open'));},true);
+
+/* ══════════════════════════════════════
+   §28 · OFFLINE + INIT
+══════════════════════════════════════ */
+function checkOnline(){document.getElementById('offlineBanner').classList.toggle('show',!navigator.onLine);}
+window.addEventListener('online',()=>{checkOnline();showToast('✅ Koneksi kembali');});
+window.addEventListener('offline',()=>{checkOnline();showToast('⚠ Mode offline aktif',false,true);});
+checkOnline();
+
+buildAll();
+addLog('info','App started v'+VER);
+
+/* ══════════════════════════════════════
+   §29 · PWA — SERVICE WORKER
+══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   §30 · VOICE INPUT (Speech Recognition)
+══════════════════════════════════════ */
+(function(){
+
+  /* ── Konversi kata angka Indonesia ke digit ── */
+  const ID_NUMS={
+    nol:0,satu:1,dua:2,tiga:3,empat:4,lima:5,enam:6,tujuh:7,delapan:8,sembilan:9,
+    sepuluh:10,sebelas:11,duabelas:12,tigabelas:13,empatbelas:14,limabelas:15,
+    enambelas:16,tujuhbelas:17,delapanbelas:18,sembilanbelas:19,
+    'dua belas':12,'tiga belas':13,'empat belas':14,'lima belas':15,
+    'enam belas':16,'tujuh belas':17,'delapan belas':18,'sembilan belas':19,
+    duapuluh:20,'dua puluh':20,tigapuluh:30,'tiga puluh':30,
+    empatpuluh:40,'empat puluh':40,limapuluh:50,'lima puluh':50,
+    enampuluh:60,'enam puluh':60,tujuhpuluh:70,'tujuh puluh':70,
+    delapanpuluh:80,'delapan puluh':80,sembilanpuluh:90,'sembilan puluh':90,
+    seratus:100,duaratus:200,tigaratus:300,empatratus:400,limaratus:500,
+    'satu ratus':100,'dua ratus':200,'tiga ratus':300,'empat ratus':400,'lima ratus':500
+  };
+
+  function tryParseNum(tok){
+    const t=tok.toLowerCase().trim();
+    if(ID_NUMS[t]!==undefined)return ID_NUMS[t];
+    const n=parseInt(t);
+    return isNaN(n)?null:n;
+  }
+
+  /* ── Parse teks suara: "alkohol 5" → {name, qty} ── */
+  function parseVoice(text){
+    const raw=text.trim();
+    if(!raw)return null;
+    const tokens=raw.split(/\s+/);
+    if(tokens.length===0)return null;
+
+    // Angka di akhir: "alkohol 5"
+    const lastN=tryParseNum(tokens[tokens.length-1]);
+    if(lastN!==null&&tokens.length>1){
+      return{name:tokens.slice(0,-1).join(' '),qty:lastN};
+    }
+    // Angka di awal: "5 alkohol"
+    const firstN=tryParseNum(tokens[0]);
+    if(firstN!==null&&tokens.length>1){
+      return{name:tokens.slice(1).join(' '),qty:firstN};
+    }
+    // Tidak ada angka → qty default 1
+    return{name:raw,qty:1};
+  }
+
+  /* ── Terapkan hasil suara ke kamar ── */
+  function applyVoiceItem(ri,name,qty){
+    if(!name.trim()||qty<1)return;
+    const cap=name.trim().charAt(0).toUpperCase()+name.trim().slice(1);
+    const exist=S.rooms[ri].items.find(it=>it.nama.toLowerCase()===cap.toLowerCase()||it.nama.toLowerCase()===name.trim().toLowerCase());
+    pushUndo(ri);
+    if(exist){
+      exist.diambil=(exist.diambil||0)+qty;
+      scheduleSave();
+      renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);
+      showToast(`✅ "${exist.nama}" +${qty} → total ${exist.diambil}`);
+    } else {
+      const it=freshItem(cap);it.diambil=qty;
+      S.rooms[ri].items.push(it);
+      scheduleSave();
+      renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);
+      showToast(`✅ Ditambah: "${cap}" × ${qty}`);
+    }
+    addLog('info',`Voice Kamar ${ri+1}: ${cap} x${qty}`);
+  }
+
+  /* ── State ── */
+  let _vRi=-1,_vRecog=null,_vActive=false,_vPendingRi=-1;
+
+  /* ── UI helpers ── */
+  function setVoiceUI(ri,on){
+    document.querySelectorAll('.voice-btn').forEach((b,i)=>{
+      // match by data from onclick attr
+      const onclick=b.getAttribute('onclick')||'';
+      const match=onclick.match(/startVoice\((\d+)\)/);
+      if(match&&parseInt(match[1])===ri)b.classList.toggle('listening',on);
+    });
+    const bar=document.getElementById('voiceBar');
+    if(bar)bar.classList.toggle('hidden',!on);
+  }
+
+  function setBarText(main,sub){
+    const t=document.getElementById('voiceBarTxt');
+    const p=document.getElementById('voiceBarPrev');
+    if(t)t.textContent=main||'';
+    if(p)p.textContent=sub||'';
+  }
+
+  /* ── Stop voice ── */
+  function stopVoice(){
+    if(_vRecog){try{_vRecog.abort();}catch(e){}}
+    _vRecog=null;
+    if(_vRi>=0)setVoiceUI(_vRi,false);
+    _vActive=false;_vRi=-1;
+    const bar=document.getElementById('voiceBar');
+    if(bar)bar.classList.add('hidden');
+  }
+  window.stopVoiceExt=stopVoice;
+
+  /* ── Mulai pengenalan suara (setelah izin oke) ── */
+  function beginRecognition(ri){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    _vRi=ri;_vActive=true;
+    const recog=new SR();
+    _vRecog=recog;
+    recog.lang='id-ID';
+    recog.interimResults=true;
+    recog.maxAlternatives=5;
+    recog.continuous=false;
+
+    setVoiceUI(ri,true);
+    setBarText('🎤 Mendengarkan...','ucapkan: "nama barang jumlah" — misal: "alkohol 5"');
+
+    recog.onresult=function(e){
+      let interim='',final='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const t=e.results[i][0].transcript;
+        if(e.results[i].isFinal)final+=t;else interim+=t;
+      }
+      const cur=final||interim;
+      if(cur){
+        const p=parseVoice(cur);
+        setBarText('🎤 Mendengarkan...',p&&p.name?`"${p.name}" × ${p.qty}`:cur);
+      }
+      if(final){
+        const p=parseVoice(final);
+        if(p&&p.name.trim().length>0){
+          stopVoice();
+          applyVoiceItem(ri,p.name,Math.max(1,p.qty));
+        } else {
+          setBarText('⚠ Tidak terdeteksi, coba ucapkan lagi...','');
+          setTimeout(()=>{if(_vActive&&_vRi===ri)stopVoice();},2000);
+        }
+      }
+    };
+
+    recog.onerror=function(e){
+      stopVoice();
+      if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+        showMicModal('denied',ri);
+      } else if(e.error==='no-speech'){
+        showToast('🎤 Tidak ada suara — coba lagi',false,true);
+      } else if(e.error==='network'){
+        showToast('🎤 Butuh koneksi internet untuk Speech Recognition',false,true);
+      } else {
+        showToast('🎤 Error: '+e.error,false,true);
+      }
+    };
+
+    recog.onend=function(){
+      if(_vActive&&_vRi===ri)stopVoice();
+    };
+
+    try{recog.start();}
+    catch(e){
+      stopVoice();
+      showToast('❌ Gagal mulai: '+e.message,true);
+    }
+  }
+
+  /* ── Modal izin mikrofon ── */
+  function showMicModal(type,ri){
+    _vPendingRi=(ri!==undefined)?ri:_vPendingRi;
+    const title=document.getElementById('micModalTitle');
+    const body=document.getElementById('micModalBody');
+    const foot=document.getElementById('micModalFoot');
+    if(!body)return;
+
+    if(type==='denied'){
+      if(title)title.textContent='🔒 Izin Mikrofon Diblokir';
+      body.innerHTML=`
+        <div class="mic-warn">⚠ Akses mikrofon sebelumnya pernah ditolak atau diblokir browser. Perlu diaktifkan manual.</div>
+        <div class="mic-step">
+          <div class="mic-snum">1</div>
+          <div class="mic-stxt">Lihat <b>ikon kunci 🔒</b> atau <b>ikon info ⓘ</b> di pojok kiri <b>address bar</b> browser (bagian atas, tempat ketik URL).</div>
+        </div>
+        <div class="mic-step">
+          <div class="mic-snum">2</div>
+          <div class="mic-stxt">Klik ikon tersebut → cari menu <b>"Izin Situs"</b> atau <b>"Site Settings"</b> → klik <b>Mikrofon</b>.</div>
+        </div>
+        <div class="mic-step">
+          <div class="mic-snum">3</div>
+          <div class="mic-stxt">Ubah dari <code>Blokir</code> menjadi <code>Izinkan</code> lalu <b>refresh</b> halaman ini.</div>
+        </div>
+        <div class="mic-step">
+          <div class="mic-snum">4</div>
+          <div class="mic-stxt">Atau ketuk tombol <b>Coba Minta Izin</b> di bawah — browser akan menampilkan dialog izin.</div>
+        </div>`;
+      foot.innerHTML=`
+        <button class="btn bg" onclick="CM('ovMic')">Tutup</button>
+        <button class="btn bpur" onclick="retryMicPermission()">🔄 Coba Minta Izin</button>`;
+    } else {
+      // type === 'guide' — first time, explain how it works
+      if(title)title.textContent='🎤 Cara Pakai Suara';
+      body.innerHTML=`
+        <p style="font-size:13px;color:var(--txt2);margin-bottom:12px">Browser akan meminta izin akses mikrofon. Klik <b style="color:var(--acc)">Izinkan</b> saat muncul dialog.</p>
+        <div class="mic-example">
+          <div class="mic-ex-title">Contoh ucapan</div>
+          <div class="mic-ex-row"><span class="mic-ex-say">"alkohol 5"</span><span class="mic-ex-arr">→</span><span class="mic-ex-res">Alkohol diambil 5</span></div>
+          <div class="mic-ex-row"><span class="mic-ex-say">"kasa steril sepuluh"</span><span class="mic-ex-arr">→</span><span class="mic-ex-res">Kasa Steril diambil 10</span></div>
+          <div class="mic-ex-row"><span class="mic-ex-say">"3 spuit"</span><span class="mic-ex-arr">→</span><span class="mic-ex-res">Spuit diambil 3</span></div>
+          <div class="mic-ex-row"><span class="mic-ex-say">"betadine"</span><span class="mic-ex-arr">→</span><span class="mic-ex-res">Betadine diambil 1</span></div>
+        </div>
+        <p style="font-size:11px;color:var(--txt3);margin-top:10px">Jika nama sudah ada di kamar, jumlah akan <b style="color:var(--acc)">ditambahkan</b> ke total yang sudah ada.</p>`;
+      foot.innerHTML=`
+        <button class="btn bg" onclick="CM('ovMic')">Batal</button>
+        <button class="btn ba" onclick="CM('ovMic');doStartVoice(_vPendingRi)">🎤 Mulai Rekam</button>`;
+    }
+    OM('ovMic');
+  }
+
+  window.retryMicPermission=async function(){
+    CM('ovMic');
+    await new Promise(r=>setTimeout(r,300));
+    doStartVoice(_vPendingRi);
+  };
+
+  /* ── Core: minta izin lalu mulai ── */
+  async function doStartVoice(ri){
+    if(ri<0||ri===undefined)return;
+
+    // 1. Cek permission state lewat Permissions API (kalau tersedia)
+    let state='prompt';
+    if(navigator.permissions){
+      try{
+        const res=await navigator.permissions.query({name:'microphone'});
+        state=res.state;
+        // Pantau perubahan permission
+        res.onchange=()=>{if(res.state==='granted'&&_vPendingRi>=0)doStartVoice(_vPendingRi);};
+      }catch(e){}
+    }
+
+    if(state==='denied'){
+      showMicModal('denied',ri);
+      return;
+    }
+
+    // 2. getUserMedia — INI yang menampilkan dialog izin browser
+    //    Wajib dipanggil dari user gesture (click), yang kita sudah lakukan
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      // Langsung stop — kita hanya butuh izinnya
+      stream.getTracks().forEach(t=>t.stop());
+    }catch(err){
+      addLog('warn','getUserMedia: '+err.name+' '+err.message);
+      if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError'){
+        showMicModal('denied',ri);
+      }else if(err.name==='NotFoundError'){
+        showToast('❌ Mikrofon tidak ditemukan di perangkat ini.',true);
+      }else if(err.name==='NotSupportedError'||err.name==='TypeError'){
+        // HTTPS required — coba langsung SpeechRecognition saja
+        beginRecognition(ri);
+      }else{
+        showToast('❌ Tidak bisa akses mikrofon: '+err.message,true);
+      }
+      return;
+    }
+
+    // 3. Mulai speech recognition
+    beginRecognition(ri);
+  }
+
+  /* ── Entry point dari tombol 🎤 ── */
+  window.startVoice=function(ri){
+    // Toggle: jika sedang rekam di kamar yang sama → stop
+    if(_vActive&&_vRi===ri){stopVoice();return;}
+    if(_vActive)stopVoice();
+
+    // Cek browser support
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){
+      showToast('❌ Browser tidak support. Gunakan Chrome/Edge terbaru.',true);
+      return;
+    }
+
+    // Cek HTTPS / localhost (required untuk mic)
+    const proto=location.protocol;
+    if(proto!=='https:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
+      showToast('⚠ Mikrofon hanya bisa di HTTPS atau localhost.',false,true);
+      // Tetap coba — mungkin jalan di beberapa konteks
+    }
+
+    _vPendingRi=ri;
+
+    // Cek apakah izin sudah pernah diberikan sebelumnya
+    if(navigator.permissions){
+      navigator.permissions.query({name:'microphone'}).then(res=>{
+        if(res.state==='granted'){
+          // Langsung mulai tanpa perlu dialog izin
+          doStartVoice(ri);
+        }else if(res.state==='denied'){
+          showMicModal('denied',ri);
+        }else{
+          // 'prompt' → tampilkan panduan dulu, user klik tombol baru minta izin
+          showMicModal('guide',ri);
+        }
+      }).catch(()=>doStartVoice(ri));
+    }else{
+      // Permissions API tidak tersedia → langsung coba
+      doStartVoice(ri);
+    }
+  };
+
+  // Expose untuk modal
+  window._vPendingRi=_vPendingRi;
+  Object.defineProperty(window,'_vPendingRi',{get:()=>_vPendingRi,set:v=>{_vPendingRi=v;}});
+
+  // ESC untuk stop
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&_vActive)stopVoice();
+  });
+
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg=>{
+        addLog('info','SW registered: '+reg.scope);
+        // Cek update
+        reg.addEventListener('updatefound',()=>{
+          const nw=reg.installing;
+          nw.addEventListener('statechange',()=>{
+            if(nw.state==='installed'&&navigator.serviceWorker.controller){
+              showToast('🔄 Update tersedia — refresh untuk memperbarui',false,true);
+            }
+          });
+        });
+      })
+      .catch(err=>addLog('error','SW failed: '+err));
+  });
+}
+
+// Prompt install PWA
+let _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_deferredPrompt=e;
+  // Tampilkan banner install jika belum pernah install
+  if(!localStorage.getItem('pwa_installed')){
+    setTimeout(()=>showInstallBanner(),2000);
+  }
+});
+window.addEventListener('appinstalled',()=>{
+  localStorage.setItem('pwa_installed','1');_deferredPrompt=null;
+  const b=document.getElementById('installBanner');if(b)b.remove();
+  showToast('✅ OK Operasi berhasil diinstall!');
+});
+function showInstallBanner(){
+  if(document.getElementById('installBanner'))return;
+  const b=document.createElement('div');b.id='installBanner';
+  b.style.cssText='position:fixed;bottom:70px;left:12px;right:12px;z-index:8000;background:linear-gradient(135deg,#0d1420,#162236);border:1px solid rgba(34,211,180,.35);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:tIn .3s ease';
+  b.innerHTML=`<div style="width:40px;height:40px;background:linear-gradient(135deg,#22d3b4,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#080c12;flex-shrink:0">OK</div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#e2eaf6">Install OK Operasi</div><div style="font-size:11px;color:#4f6a88;margin-top:2px">Akses offline · Tampil fullscreen</div></div>
+    <button onclick="doInstallPWA()" style="background:linear-gradient(135deg,#22d3b4,#0d9488);border:none;color:#080c12;font-weight:700;font-size:12px;padding:8px 14px;border-radius:8px;cursor:pointer;flex-shrink:0">Install</button>
+    <button onclick="document.getElementById('installBanner').remove()" style="background:none;border:none;color:#4f6a88;font-size:20px;cursor:pointer;padding:0 4px;flex-shrink:0">×</button>`;
+  document.body.appendChild(b);
+}
+function doInstallPWA(){
+  if(!_deferredPrompt){showToast('Buka di Chrome Android untuk install',false,true);return;}
+  _deferredPrompt.prompt();
+  _deferredPrompt.userChoice.then(r=>{
+    if(r.outcome==='accepted'){localStorage.setItem('pwa_installed','1');}
+    _deferredPrompt=null;
+    const b=document.getElementById('installBanner');if(b)b.remove();
+  });
+}
+</script>
+</body>
+</html>
